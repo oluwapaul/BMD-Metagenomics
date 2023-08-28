@@ -1,0 +1,947 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2709
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 ---\
+title: "RGI with BMD metagenome"\
+author: "Tim Johnson"\
+date: "8/1/2019"\
+output: html_document\
+---\
+\
+The goal is to call ARGs in the BMD metagenome in both the binned and unbinned assemblies with rgi.py and to get counts with a mapping software and count resistance genes / sample.\
+\
+RGI 4.0.3 is installed on SciNet. Use `module load rgi`.\
+\
+First I want to put the data in my own space to work on here:\
+\
+`/project/fsep_004/tim_johnson/bmd/data/jules_assembly/`\
+\
+I put the metaspades assembly in the `unbinned` directory and the metabat binned in the `binned` directory.\
+\
+###Run metagenemark\
+\
+In order for metagenemark to run I have to put the license in my home directory with the name `.gm_key`\
+My home directory is /home/tim.johnson\
+\
+```\
+#this is on ceres\
+\
+$ module load metagenemark/3.26\
+\
+$ cd /project/fsep_004/tim_johnson/bmd/data/jules_assembly/unbinned\
+$ /software/7/apps/metagenemark/3.26/gmhmmp metaspades_500_scaff.fa -m /software/7/apps/metagenemark/3.26/MetaGeneMark_v1.mod -f G -a -d -A metaspades_500_scaff.prot.fasta -D metaspades_500_scaff.nucl.fasta\
+\
+## Fix spaces in fasta files\
+$ for i in d*.prot.fasta; do cat $i | tr '\\t' '|' | tr ' ' '_' > $i.ns; done\
+$ for i in d*.nucl.fasta; do cat $i | tr '\\t' '|' | tr ' ' '_' > $i.ns; done\
+\
+```\
+\
+The scripts are located here `/home/tim.johnson/scripts/slurm/BMD_rgi/mgm.sbatch.sh`. The loop to go through the bins is after the assembly lines that are also listed above.\
+\
+####Run the RGI on the Sequences\
+\
+There is an option to run rgi on metagenomic contigs. But I still cannot get this to work. There have been problems with this in the past also...\
+\
+So I decided to run rgi on the orf called by metagenemark. This worked well and was actually quite fast when using DIAMOND. Script was save at `scripts/slurm/BMD_rgi/rgi_prot.sbatch.sh`\
+\
+Additionally, the rgi output needs to be converted to a .ggf file. I found a script at `https://github.com/compgenomics2018/g3-annotation-team2/blob/master/scripts/rgi2gff.py` that I edited to fit my purpose. This script is saved at `~/scripts/rgi2gff.py\
+\
+```\
+$ rgi main --input_sequence metaspades_500_scaff.prot.fasta.ns --output_file metaspades_500_scaff.prot.fasta.ns.rgi_out --input_type protein --local -a DIAMOND -n 40 --clean\
+\
+$ sed 's/;/,/g' metaspades_500_scaff.prot.fasta.ns.rgi_out.txt > metaspades_500_scaff.prot.fasta.ns.rgi_out2.txt\
+\
+$ python ~/scripts/rgi2gff_v2.py metaspades_500_scaff.prot.fasta.ns.rgi_out2.txt metaspades_500_scafot.fasta.ns.rgi_out.gff\
+\
+$ sed 's/>//g' metaspades_500_scaff.prot.fasta.ns.rgi_out.gff > metaspades_500_scaff.prot.fasta.ns.rgi_out.final.gff\
+\
+## Using CARD 3.2.0 and database 1.1.7\
+cd \
+python rgi.py -t protein -i $i -n 16 -o $i.rgi_out -v 1\
+\
+##Now loop over all the bins\
+\
+$ cd /project/fsep_004/tim_johnson/bmd/data/jules_assembly/binned/mgm_out\
+\
+$ for i in *.fasta.ns; do rgi main --input_type protein --input_sequence $i -n 40 -o ../rgi_out/$i.rgi_out --local -a DIAMOND -n 40 --clean; done\
+\
+$ cd ../rgi_out\
+\
+$ for i in *rgi_out.txt; do sed 's/;/,/g' $i > $i.2; done\
+\
+$ for i in *rgi_out.txt.2; do python ~/scripts/rgi2gff_v2.py $i $i.gff; done\
+\
+$ for i in *rgi_out.txt.2.gff; do sed 's/>//g' $i > ../final_gffs/$i; done\
+\
+```\
+\
+In creating the gff I used only `Model_type == "protein homolog model"`\
+\
+Some interesting tidbits out of doing just this much work.\
+\
+For the complete assembly we have 393 ARGs annotated\
+\
+To examine multi-ARG contigs or mdr contigs I worked on the following:\
+\
+```\
+\
+$ while read l; do echo "$l"; grep $l metaspades_500_scaff.fa -A 1 >> multipleARGcontigs.fasta; done < multipleARGcontigs_uniq.txt\
+\
+$ cut -f1 metaspades_500_scaff.prot.fasta.ns.rgi_out.final.gff | sort | uniq -D > multipleARGcontigs.txt\
+$ cut -f1 metaspades_500_scaff.prot.fasta.ns.rgi_out.final.gff | sort | uniq -d > multipleARGcontigs_uniq.txt\
+\
+```\
+\
+\
+In the bins, most (about 900) have 0 ARGs. In the other bins we have:\
+159 ARGs total\
+```\
+$ wc -l *.gff | sort\
+\
+    2 bin.166.fa.prot.fasta.ns.rgi_out.txt.gff\
+    2 bin.396.fa.prot.fasta.ns.rgi_out.txt.gff\
+    2 bin.424.fa.prot.fasta.ns.rgi_out.txt.gff\
+    2 bin.555.fa.prot.fasta.ns.rgi_out.txt.gff\
+    2 bin.642.fa.prot.fasta.ns.rgi_out.txt.gff\
+    2 bin.822.fa.prot.fasta.ns.rgi_out.txt.gff\
+    2 bin.845.fa.prot.fasta.ns.rgi_out.txt.gff\
+   45 bin.229.fa.prot.fasta.ns.rgi_out.txt.gff\
+    4 bin.726.fa.prot.fasta.ns.rgi_out.txt.gff\
+    8 bin.24.fa.prot.fasta.ns.rgi_out.txt.gff\
+ \
+  \
+```\
+\
+88 bins have 1 ARG so I don't include them here because the list is too long.\
+\
+####Get counts of the resistance genes\
+\
+Jules already mapped the raw reads to the shared assembly. These mapping files are available on scinet.\
+\
+The sorted, indexed bams they are located in:\
+`/project/fsepru/jtrachsel/p_t_meta/assembly_comp/metabat`\
+ \
+The sam files are in the folder:\
+`/project/fsepru/jtrachsel/p_t_meta/assembly_comp/binmapping`\
+(the SLURM scripts I used to generate the mappings are also in this folder)\
+ \
+Again, for clarity the reference assembly these mappings were generated with is \'93metaspades_500_scaff.fa\'94\
+This assembly is located here:\
+ \
+`/project/fsepru/jtrachsel/p_t_meta/assembly_comp/metabat/metaspades_500_scaff.fa`\
+\
+\
+The submission script is here `/home/tim.johnson/scripts/slurm/BMD_rgi/htseq_sub.sh` \
+\
+Here are the highlights:\
+\
+```\
+date >> log\
+\
+cd /project/fsep_004/tim_johnson/bmd/data/jules_assembly/unbinned/\
+\
+module load python_2/2.7.14\
+module load parallel\
+\
+echo "start htseq-count-arg" >> log\
+for i in /project/fsepru/jtrachsel/p_t_meta/assembly_comp/binmapping/*.sam.gz; do echo "htseq-count -t AMR_gene $i metaspades_500_scaff.prot.fasta.ns.rgi_out.final.gff > $i.counts"; done > htseq-count-command.sh\
+cat htseq-count-command.sh | parallel\
+\
+echo "finished htseq-count-arg" >> log\
+date >> log\
+```\
+\
+Now I need to compile all the results from individual count files into an experiment wide count file\
+\
+```\{r setup\}\
+knitr::opts_knit$set(root.dir = '/Volumes/ag_ansc/Users/john2185/USDA_laptop_use_this_one/Desktop/BMD_turkeys/Jules-assembly/ARGs/data/')\
+```\
+\
+```\{r\}\
+library("stringr")\
+library('tidyr')\
+library("dplyr")\
+getwd()\
+sample_list <- list.files()\
+sample_list_short <- str_replace(sample_list, "_mapped.sam.gz.counts", "")\
+n_genes <- 393\
+count <- 0\
+rm(rgi_count_table)\
+for (s in sample_list)\{\
+  count <- count + 1\
+  temp <- read.table(s, sep = "\\t", nrows = n_genes, stringsAsFactors = FALSE)\
+  colnames(temp) <- c("geneID", sample_list_short[count])\
+  print(sample_list[count])\
+  if(exists("rgi_count_table"))\{\
+    print("yes")\
+    rgi_count_table <- merge(rgi_count_table, temp, by.x = "geneID", by.y = "geneID")\
+    print(count)\
+  \} else \{\
+    print("no")\
+    print(count)\
+    rgi_count_table <- temp\
+  \}\
+\}\
+\
+write.table(rgi_count_table, "../rpkm/rgi_count_table.txt", sep = "\\t", quote = F, row.names = F)\
+```\
+\
+Now I need to work on the gene lengths and sequence counts per sample...\
+\
+I have a file with the total obtained counts at `/Users/artjohnson/Desktop/BMD_turkeys/stderr.12495.sn-mem-0`. This is the report log from trimmomatic and I parsed out of that the total number of sequences. For example, each sample has something like this:\
+Input Read Pairs: 429965 Both Surviving: 377630 (87.83%) Forward Only Surviving: 35729 (8.31%) Reverse Only Surviving: 1393 (0.32%) Dropped: 15213 (3.54%)\
+\
+I used the "Input Read Pairs" number. These are confirmed by numbers I had calculated earlier on a subset of the samples.\
+\
+```\{r\}\
+rgi_gff <- read.delim("../AMR/jules_assembly/data/rgi_out/metaspades_500_scaff.prot.fasta.ns.rgi_out.final.gff", sep = "\\t", header = F)\
+\
+colnames(rgi_gff) <- c("seqid", "source", "type", "start", "stop", "score", "strand", "phase", "attributes")\
+rgi_gff$length <- rgi_gff$stop - rgi_gff$start + 1\
+rgi_gff2 <- rgi_gff %>%\
+  separate(attributes, into = c("title", "gene_id", "title2","Gene_name", "title3", "Spectrum", "title4","Category", "title5","Mechanism"), sep = "[;=]") \
+\
+sample_reads <- read.delim("../AMR/jules_assembly/data/rpkm/stderr.12495.sn-mem-0", sep = "\\t", header = F, stringsAsFactors = FALSE)\
+colnames(sample_reads) <- c("Sample_id", "Total_seqs")\
+sample_reads$perMillion <- sample_reads$Total_seqs / 1000000\
+sample_reads2 <- sample_reads %>%\
+  separate(Sample_id, into = "short_name", remove = F)\
+\
+#sample_reads <- t(sample_reads2)\
+#row.names(sample_reads) <- c("Sample_id", "Total_seqs")\
+\
+```\
+\
+\
+The result of all that was a file called `rgi_count_table.txt`.\
+\
+####Normalization and Statistics\
+\
+I will normalize by the reads per kilobase million approach. I'm not convinced this is the perfect normalization method, but I think its good enough. Kata, in her breast milk microbiome paper normalized by 16S copies rather than total reads, but thats a minor difference and rpkm is widely used. So I need to make this normalized table.\
+\
+What we need:\
+count table: rgi_count_table (uses short sample names)\
+gene lengths: rgi_gff$length \
+reads per sample: samples_reads2\
+\
+What I need to do is (count table) / (reads per sample) * 1,000,000  / (gene lengths)\
+\
+\
+```\{r\}\
+rgi_count_table <- read.delim("../AMR/jules_assembly/data/rpkm/rgi_count_table.txt")\
+row.names(rgi_count_table) <- rgi_count_table$geneID\
+rgi_count_table2 <- rgi_count_table[,-1] \
+rpm <- sweep(rgi_count_table[,-1], 2, sample_reads2$perMillion, '/')\
+gene_lengths <- rgi_gff2[,c(10,19)]\
+row.names(gene_lengths) <- rgi_gff2$gene_id\
+rpm_lengths <- merge(gene_lengths, rpm, by.x = "gene_id", by.y = 0)\
+rpkm <- rpm_lengths[,-1:-2]/rpm_lengths$length\
+\
+min(rpkm[rpkm>0])\
+min(rpm[rpm>0]) * 100\
+max(rpkm)\
+rpkm2 <- rpm * 100  ### This is just enough to make the smallest value greater than 1\
+min(rpkm2[rpkm2>0])\
+\
+#rpkm_meta <- cbind(rpm_lengths$gene_id,rpkm2)\
+#colnames(rpkm_meta[1,]) <- "gene_id"\
+#rownames(rpkm_meta) <- rpkm_meta[,1]\
+#rpkm_meta <- rpkm_meta[,-1]\
+rpkm_round <- round(rpkm2)\
+rpkm_round <- rpkm_round + 1\
+write.table(rpkm_round, "../AMR/jules_assembly/data/rpkm/rpkm_count_table_pseudocounts_20220415.txt", sep = "\\t", quote = F, row.names = T)\
+```\
+\
+First lets do some diversity statistics:\
+\
+```\{r\}\
+library(vegan)\
+library(ggplot2)\
+veganCovEllipse <- function (cov, center = c(0,0), scale = 1, npoints = 100)\{\
+  theta <- (0:npoints) * 2 * pi/npoints\
+  Circle <- cbind(cos(theta), sin(theta))\
+  t(center + scale * t(Circle %*% chol(cov)))\
+\}\
+\
+pairwise.adonis <- function(x,factors, sim.method, p.adjust.m)\
+\{\
+  library(vegan)\
+  co = as.matrix(combn(unique(factors),2))\
+  pairs = c()\
+  F.Model =c()\
+  R2 = c()\
+  p.value = c()\
+  \
+  for(elem in 1:ncol(co))\{\
+    ad = adonis(x[factors %in% c(as.character(co[1,elem]),as.character(co[2,elem])),] ~\
+                  factors[factors %in% c(as.character(co[1,elem]),as.character(co[2,elem]))] , method =sim.method, permutations = 9999);\
+    pairs = c(pairs,paste(co[1,elem],'vs',co[2,elem]));\
+    F.Model =c(F.Model,ad$aov.tab[1,4]);\
+    R2 = c(R2,ad$aov.tab[1,5]);\
+    p.value = c(p.value,ad$aov.tab[1,6])\
+  \}\
+  p.adjusted = p.adjust(p.value,method=p.adjust.m)\
+  pairw.res = data.frame(pairs,F.Model,R2,p.value,p.adjusted)\
+  return(pairw.res)\
+\}\
+\
+dist.matr.bray <- vegdist(t(rpkm_round))\
+#otu_subsample_meta <- merge(otu_subsample, meta, by.x = 0, by.y = "name")\
+str(otu_subsample)\
+\
+mds <- metaMDS(dist.matr.bray, k = 2,trymax = 1000, autotransform = FALSE)\
+\
+# the stress of an ordination is an important metric to report.  Basically it tells you how well the spatial distances given in the NMDS represent the actual distances or similarities from your distance matrix\
+# a lower stress means the spatial distances in your NMDS more accurately represent your calculated similarites\
+\
+mds$stress\
+\
+# I like to merge my NMDS coordinates in together with my metadata to make one big dataframe, I think this makes plotting easier later on\
+\
+nmds <-as.data.frame(mds$points)\
+nmds$group <- rownames(nmds)\
+metanmds <- merge(coldata_bmd, nmds, by.x = 'sample', by.y = 'group')\
+str(metanmds)\
+\
+\
+\
+\
+\
+# this generates a dataframe containing the group centroids\
+\
+NMDS.mean <- aggregate(metanmds[,c("MDS1", "MDS2")], list(group=metanmds$group), mean)\
+colnames(NMDS.mean) <- c('design', 'groupX', 'groupY')\
+\
+# merging the group centroids with the rest of the NMDS data #\
+metanmds <- merge(metanmds, NMDS.mean , by.x = 'group', by.y='design')\
+\
+str(metanmds)\
+metanmds$day <- factor(metanmds$day)\
+\
+\
+### ok now we have our metaNMDS dataframe, lets try some plotting ###\
+### super brief into to ggplot2, you feed in data to the ggplot() function then add different 'geoms' layer by layer\
+### you map aspects of your data to visual features using aesthetics 'aes()'\
+### only things that you want to change according to your data should go inside aes()\
+### things you want to be the same for all aspects of your plot should go outside of aes()\
+\
+ggplot(metanmds, aes(x=MDS1, y=MDS2)) + geom_point(color='green')\
+\
+theme_set(theme_grey())\
+ggplot(metanmds, aes(x=MDS1, y=MDS2)) + geom_point(aes(color=antibiotic))\
+ggplot(metanmds, aes(x=MDS1, y=MDS2)) + geom_point(aes(color=day))\
+ggplot(metanmds, aes(x=MDS1, y=MDS2)) + geom_point(aes(color = antibiotic, shape=day))\
+\
+ggplot(metanmds, aes(x=groupX, y=groupY)) +\
+  geom_point(aes(color=antibiotic, shape=day))\
+\
+ggplot(metanmds, aes(x=groupX, y=groupY)) +\
+  geom_point(aes(color=antibiotic, shape=day)) + \
+  geom_segment(aes(x=MDS1, y=MDS2, xend=groupX, yend=groupY, color=antibiotic), size = .3)  +\
+  labs(x='NMDS 1', y= 'NMDS 2', caption = paste('Ordination stress: ', round(mds$stress, digits = 3)))\
+ggsave("../figures/ARGs_count_table_bray_NMDS_allpoints.png", height = 4, width = 6)\
+\
+```\
+```\{r\}\
+# Lets try some elipses around our groups\
+\
+\
+########## ellipse #############\
+\
+# this is a vegan function to plot ordinations, we are using this to get the ordination information into a form where we can use ggplot2\
+# vegan has pretty good plotting fucntionality but i haven't really learned it\
+# we are using this vegan function to calculate standard error elipses around each of our groups\
+\
+######\
+# there is some weirdness in R where the order of your data is critical, and sometimes things get reordered when you run\
+# functions, you shouldn't assume that your samples are in the same order in an NMDS object as they are in your input data\
+# this is how I check this:\
+\
+nmds$group == metanmds$sample  # this is a problem, we need these two dataframes in the same order...\
+#metanmds$group <- as.character(metanmds$group)\
+metanmds <- metanmds[match(nmds$group,metanmds$sample),] # ok I think this works as long as $group isnt a factor...\
+nmds$group == metanmds$sample  # hurray!\
+############\
+\
+ord <- ordiellipse(mds, metanmds$group, label = TRUE, conf = .95, kind = 'se', draw = 'none')\
+\
+# this little loop generates a dataframe containing the ellipse data for each group\
+\
+df_ell <- data.frame()\
+for (d in levels(metanmds$group))\{\
+  df_ell <- rbind(df_ell, cbind(as.data.frame(with(metanmds[metanmds$group == d,],\
+          veganCovEllipse(ord[[d]]$cov, ord[[d]]$center, ord[[d]]$scale))),group=d))\
+\}\
+\
+colnames(df_ell) <- c('MDS1', 'MDS2', 'design') # just making it so our column names are consistent\
+\
+# now we are adding metadata to the ellipse dataframe\
+# probably an easier way to do this but oh well...\
+\
+meta_sub <- coldata_bmd[,-1]\
+meta_sub2 <- unique(meta_sub)\
+df_ell2 <- merge(df_ell, meta_sub2, by.x = 'design', by.y = 'group')\
+str(df_ell2)\
+df_ell2$day <- factor(df_ell2$day)\
+\
+ggplot(metanmds, aes(x=groupX, y=groupY)) +\
+  geom_point(aes(color=antibiotic, shape=day)) + \
+  geom_path(data = df_ell2, aes(x=MDS1, y=MDS2, group=design, color=antibiotic)) +\
+  labs(x='NMDS 1', y= 'NMDS 2', caption = paste('Ordination stress: ', round(mds$stress, digits = 3)))\
+ggsave("../figures/ARGs_count_table_bray_NMDS.png", height = 4, width = 6)\
+  \
+ggplot(metanmds, aes(x=groupX, y=groupY)) +\
+  geom_point(aes(color=antibiotic, shape=day)) + \
+  geom_path(data = df_ell2, aes(x=MDS1, y=MDS2, group=design, color=antibiotic)) +\
+  geom_segment(aes(x=MDS1, y=MDS2, xend=groupX, yend=groupY, color=antibiotic), size = .3) +\
+  labs(x='NMDS 1', y= 'NMDS 2', caption = paste('Ordination stress: ', round(mds$stress, digits = 3)))\
+ggsave("../figures/ARGs_count_table_bray_NMDS_all.ellipses.png", height = 4, width = 6)\
+```\
+\
+OK so it seems like something is going on. Would be good to run some PERMANOVAs to see what is happening.\
+\
+```\{r\}\
+\
+###################################### ###########################################\
+# stats whatnot\
+\
+# this website is a great resource https://sites.google.com/site/mb3gustame/\
+\
+# PERMANOVA with Adonis\
+# are the differences we are seeing in the NMDS statistically significant?\
+# PERMANOVA tests for differences in position and dispersion at the same time, if you get a significant result you need\
+# to determind if the dispersion of your group is partially responsible\
+\
+PERMANOVA_out <- adonis2(t(countdata_bmd) ~ day + antibiotic + day:antibiotic, data = coldata_bmd)\
+\
+write.table(PERMANOVA_out,"../figures/Adonis_overall.csv",sep=",", row.names = TRUE) \
+\
+# this will run a PERMANOVA on all possible pairwise comparisons in your data based on the factor you feed it.\
+\
+PW.Adonis <- pairwise.adonis(x = otu_subsample[1:30,], factors = c(rep("ctrl", 10), rep("sub", 10), rep("ther", 10)), sim.method="bray", p.adjust.m = "none")\
+\
+otu_subsample_meta <- t(countdata_bmd)\
+otu_subsample_meta <- merge(coldata_bmd, otu_subsample_meta, by.x = "sample", by.y = 0)\
+days <- unique(coldata_bmd$day)\
+otu_subsample_meta$sample == coldata_bmd$sample\
+#otu_subsample_meta <- otu_subsample_meta[1:5,-1]\
+rm(PW.Adonis)\
+#l <- "cc"\
+#d <- 7\
+for(d in days)\{\
+  print(d)\
+  temp_otu <- subset(otu_subsample_meta, day == d)[,-1:-ncol(coldata_bmd)]\
+  temp_meta <- subset(coldata_bmd, day == d)$antibiotic\
+  print("Groups")\
+  print(row.names(temp_otu))\
+  print("OTU samples")\
+  print(temp_meta)\
+  temp.PW.Adonis <- pairwise.adonis(x = temp_otu, factors = temp_meta, sim.method="bray", p.adjust.m = "none")\
+  temp.PW.Adonis$day <- d\
+  if (exists("PW.Adonis")) \{\
+    PW.Adonis <- rbind(PW.Adonis, temp.PW.Adonis)\
+  \} else \{\
+    PW.Adonis <- temp.PW.Adonis\
+  \}\
+\}\
+\
+\
+PW.Adonis$BH.corr <- p.adjust(PW.Adonis$p.value, method = "BH", n = length(PW.Adonis$p.value))\
+\
+write.table(PW.Adonis,"../figures/Adonis_ARGs-Results.csv",sep=",", row.names = FALSE) \
+\
+PW.Adonis %>%  \
+  ggplot(aes(x=day, y=F.Model, shape=pair)) +\
+  geom_line() +\
+  geom_vline(xintercept=35, color = 'black', linetype = "dotted") + \
+  geom_point(aes(color=sig), size=2) + \
+  ylim(c(0,4)) +\
+  #facet_grid(.~location) +\
+  #geom_text(aes(label = BF.corr), hjust=0, vjust=0, size=3) +\
+  ggtitle('Dissimilarity of cecal microbiota over time', subtitle = 'PERMANOVA F statistic at each timepoint, how different are the diets at each timepoint? ') \
+ggsave("output/Fstat_metabolome.png", height = 3, width = 6)\
+```\
+\
+For statistics, I looked online for metagenomics statistical packages. There is an R package called `metagenomicsSeq`, but I found no good explanation of how to use it. This package was "designed to address both the effects of both normaliation and under sampling of microbial communities on disease association detection and the testing of feature correlations." https://bioconductor.org/packages/release/bioc/html/metagenomeSeq.html.\
+\
+While this sounds good, I don't know how to run it. DEseq2 is a pretty good piece of saftware with excellent documentation. Kata used it in her Nature Communications paper on AMR genes in the infant fecal microbiome. So I will give that a try. The software is meant for un-normalized read counts. I have normalized read counts, so I'm a little nervous about that, but  I will give it a try.\
+\
+All right, let's make this happen!!!\
+\
+First, read in data and work on column data types\
+```\{r\}\
+countdata_bmd <- read.delim("../rpkm/rpkm_count_table_pseudocounts.txt", sep = "\\t", header = T, stringsAsFactors = FALSE)\
+str(countdata_bmd)\
+#seems alright\
+coldata_bmd <- read.csv("../deseq/mg_metadata.csv")\
+str(coldata_bmd)\
+coldata_bmd$day <- factor(coldata_bmd$day)\
+coldata_bmd$animal_no <- factor(coldata_bmd$animal_no)\
+str(coldata_bmd)\
+#seems alright\
+\
+```\
+\
+Now we need to create our DESeq2 object. Keep this in mind about the model statement (from the Basic DESeq2 tutorial):\
+\
+The simplest design formula for differential expression would be \uc0\u8764  condition, where condition is a column in colData(dds) which specifies which of two (or more groups) the samples belong to. For the parathyroid experiment, we will specify \u8764  patient + treatment, which means that we want to test for the effect of treatment (the last factor), controlling for the effect of patient (the first factor).\
+You can use R\'92s formula notation to express any experimental design that can be described within an ANOVA-like framework. Note that DESeq2 uses the same kind of formula as in base R, e.g., for use by the lm function. If the question of interest is whether a fold change due to treatment is different\
+across groups, for example across patients, \'93interaction terms\'94 can be included using models such as \uc0\u8764  patient + treatment + patient:treatment. More complex designs such as these are covered in the other DESeq2 vignette.\
+\
+```\{r\}\
+ddsFullCountTable <- DESeqDataSetFromMatrix(\
+  countData = countdata_bmd,\
+  colData = coldata_bmd,\
+  design = ~ day + antibiotic)\
+ddsFullCountTable\
+\
+dds <- DESeq(ddsFullCountTable)\
+res <- results( dds )\
+res\
+\
+matrix(resultsNames(dds))[,1]\
+\
+comparison <- "sub_cntl"\
+deseq_res <- data.frame(results( dds, contrast = c("antibiotic", "Subtherapeutic", "Control") ))\
+comparison <- "ther_cntl"\
+deseq_res <- data.frame(results( dds, contrast = c("antibiotic", "Therapeutic", "Control") ))\
+comparison <- "ther_sub"\
+deseq_res <- data.frame(results( dds, contrast = c("antibiotic", "Therapeutic", "Subtherapeutic") ))\
+\
+print(comparison)\
+deseq_res$comparison <- comparison\
+\
+sum( deseq_res$padj < 0.05, na.rm = TRUE )\
+\
+\
+resSig <- deseq_res[ which(deseq_res$padj < 0.05 ), ]\
+tail( resSig[ order( resSig$log2FoldChange ), ] )\
+deseq_res$gene <- row.names(deseq_res)\
+if (exists("res_merged"))\{\
+        res_merged <- bind_rows(res_merged,deseq_res)\
+        \} else \{\
+        res_merged <- deseq_res\
+      \}\
+\
+write.table(res_merged, "../deseq_out/no_interaction/DESeq_results.txt", sep = "\\t", quote = F, row.names = FALSE)\
+\
+```\
+\
+```\{r\}\
+ddsFullCountTable <- DESeqDataSetFromMatrix(\
+  countData = countdata_bmd,\
+  colData = coldata_bmd,\
+  design = ~ group)\
+ddsFullCountTable\
+\
+dds <- DESeq(ddsFullCountTable)\
+res <- results( dds )\
+res\
+\
+matrix(resultsNames(dds))[,1]\
+\
+day <- 7\
+comparison <- "sub_cntl"\
+deseq_res <- data.frame(results( dds, contrast = c("group", "Sub_7", "Ctrl_7") ))\
+comparison <- "ther_cntl"\
+deseq_res <- data.frame(results( dds, contrast = c("group", "Ther_7", "Ctrl_7") ))\
+comparison <- "ther_sub"\
+deseq_res <- data.frame(results( dds, contrast = c("group", "Ther_7", "Sub_7") ))\
+\
+day <- 35\
+comparison <- "sub_cntl"\
+deseq_res <- data.frame(results( dds, contrast = c("group", "Sub_35", "Ctrl_35") ))\
+comparison <- "ther_cntl"\
+deseq_res <- data.frame(results( dds, contrast = c("group", "Ther_35", "Ctrl_35") ))\
+comparison <- "ther_sub"\
+deseq_res <- data.frame(results( dds, contrast = c("group", "Ther_35", "Sub_35") ))\
+\
+day <- 78\
+comparison <- "sub_cntl"\
+deseq_res <- data.frame(results( dds, contrast = c("group", "Sub_78", "Ctrl_78") ))\
+comparison <- "ther_cntl"\
+deseq_res <- data.frame(results( dds, contrast = c("group", "Ther_78", "Ctrl_78") ))\
+comparison <- "ther_sub"\
+deseq_res <- data.frame(results( dds, contrast = c("group", "Ther_78", "Sub_78") ))\
+\
+print(comparison)\
+deseq_res$comparison <- comparison\
+deseq_res$day <- day\
+\
+sum( deseq_res$padj < 0.05, na.rm = TRUE )\
+\
+\
+#resSig <- deseq_res[ which(deseq_res$padj < 0.05 ), ]\
+#tail( resSig[ order( resSig$log2FoldChange ), ] )\
+deseq_res$gene <- row.names(deseq_res)\
+if (exists("res_merged"))\{\
+        res_merged <- bind_rows(res_merged,deseq_res)\
+        \} else \{\
+        res_merged <- deseq_res\
+      \}\
+\
+res_merged_meta <- merge(res_merged, rgi_gff2, by.x = "gene", by.y = "gene_id")\
+write.table(res_merged_meta, "../deseq_out/no_interaction/DESeq_results_group.txt", sep = "\\t", quote = F, row.names = FALSE)\
+str(res_merged_meta)\
+res_merged_meta$day <- factor(res_merged_meta$day, levels = c(7, 35, 78))\
+res_merged_meta$comparison <- factor(res_merged_meta$comparison, levels = c("sub_cntl",  "ther_cntl", "ther_sub" ))\
+\
+ggplot(metanmds, aes(x=groupX, y=groupY)) +\
+  geom_point(aes(color=day, shape=trt)) +\
+  facet_grid(location~.)\
+\
+str(res_merged_meta)\
+res_merged_meta_day <- subset(res_merged_meta, day == 78)\
+ggplot(subset(res_merged_meta_day, padj<0.05), aes(x = Gene_name, y = log2FoldChange)) +\
+  geom_point(aes(color = Category), alpha =  0.5) +\
+  facet_grid(comparison~day) +\
+  theme(axis.text.x = element_text(angle = 90, \
+    hjust = 0.95, vjust = 0.5, size = rel(0.7)), axis.text.y = element_text(size = rel(0.7)), \
+    axis.title.x = element_blank(), axis.title.y = element_text(size = rel(0.6)), \
+    legend.text = element_text(size = rel(0.55)), legend.title = element_text(size = rel(0.6))) +\
+      scale_y_continuous(name="log2 Fold Change", limits=c(-20, 20)) +\
+    geom_hline(yintercept=0)\
+\
+ggsave("../deseq_out/interaction/ARGs_Diff_abund2_day78.png", height = 8, width = 10)\
+\
+\
+#res_merged_meta$L2FC <- res_merged_meta$log2FoldChange\
+str(res_merged_meta)\
+res_merged_meta$Category <- factor(res_merged_meta$Category)\
+\
+res_merged_meta$Gene_name <- factor(res_merged_meta$Gene_name)\
+res_merged_meta <- res_merged_meta[with(res_merged_meta, order(Category, Gene_name)),]\
+res_merged_meta$Gene_name <- factor(res_merged_meta$Gene_name, levels = unique(res_merged_meta$Gene_name))\
+res_merged_meta_trt <- subset(res_merged_meta, comparison == "ther_sub")\
+ggplot(subset(res_merged_meta_trt, padj<0.05), aes(x = Gene_name, y = log2FoldChange)) +\
+  geom_point(aes(color = Category), alpha =  0.5) +\
+  facet_grid(day~comparison) +\
+  theme(axis.text.x = element_text(angle = 90, \
+    hjust = 0.95, vjust = 0.5, size = rel(0.7)), axis.text.y = element_text(size = rel(0.7)), \
+    axis.title.x = element_blank(), axis.title.y = element_text(size = rel(0.6)), \
+    legend.text = element_text(size = rel(0.55)), legend.title = element_text(size = rel(0.6))) +\
+      scale_y_continuous(name="log2 Fold Change", limits=c(-20, 20)) +\
+    geom_hline(yintercept=0)\
+\
+ggsave("../deseq_out/interaction/ARGs_Diff_abund2_ther_sub.png", height = 8, width = 9)\
+\
+#this is the end of diff abund\
+```\
+\
+Now consider only genes in multi-ARG contigs\
+```\{r\}\
+\
+multiARG_contigs <- read.delim("../rgi_out/multipleARGcontigs.txt", sep = "\\t", header = F, stringsAsFactors = FALSE)\
+colnames(multiARG_contigs) <- "seqid"\
+\
+res_merged_meta_MDR <- merge(multiARG_contigs, res_merged_meta)\
+#res_merged_meta$Gene_name <- factor(res_merged_meta$Gene_name)\
+#res_merged_meta <- res_merged_meta[with(res_merged_meta, order(Category, Gene_name)),]\
+#res_merged_meta$Gene_name <- factor(res_merged_meta$Gene_name, levels = unique(res_merged_meta$Gene_name))\
+res_merged_meta_MDR_trt <- subset(res_merged_meta_MDR, comparison == "ther_sub")\
+ggplot(subset(res_merged_meta_MDR_trt, padj<0.05), aes(x = Gene_name, y = log2FoldChange)) +\
+  geom_point(aes(color = Category), alpha =  0.5) +\
+  facet_grid(day~comparison) +\
+  theme(axis.text.x = element_text(angle = 90, \
+    hjust = 0.95, vjust = 0.5, size = rel(0.7)), axis.text.y = element_text(size = rel(0.7)), \
+    axis.title.x = element_blank(), axis.title.y = element_text(size = rel(0.6)), \
+    legend.text = element_text(size = rel(0.55)), legend.title = element_text(size = rel(0.6))) +\
+      scale_y_continuous(name="log2 Fold Change", limits=c(-20, 20)) +\
+    geom_hline(yintercept=0)\
+\
+ggsave("../deseq_out/interaction/ARGs_Diff_abund2_MDR_ther_sub.png", height = 8, width = 6)\
+\
+#this is the end of diff abund\
+\
+```\
+\
+```\{r\}\
+dds_interaction <- DESeqDataSetFromMatrix(\
+  countData = countdata_bmd,\
+  colData = coldata_bmd,\
+  design = ~ day + antibiotic + day:antibiotic)\
+dds_interaction\
+\
+dds_interaction <- DESeq(dds_interaction, betaPrior = F)\
+res_interaction <- results( dds_interaction )\
+res_interaction\
+\
+matrix(resultsNames(dds_interaction))[,1]\
+\
+deseq_res_interaction <- data.frame(results( dds_interaction, contrast = c("antibiotic", "Therapeutic", "Subtherapeutic") ))\
+\
+#res<-results(dds, list=c("population_MDPL_vs_MDPP","populationMDPL.conditiontransfer\'94))\
+\
+test <- data.frame(results( dds_interaction, name= "day35.antibioticSubtherapeutic"))\
+                            \
+write.csv( as.data.frame(res_interaction), file = "../deseq_out/interaction/results_interaction.csv")\
+\
+```\
+\
+So if we divide all the reads by that we should be set to load into mothur. I did this in excel in the `/Users/artjohnson/Desktop/BMD_turkeys/AMR`\
+\
+Then I ran metastats in mothur v.1.39.5. I struggled setting up my shared file. There are 3 key things! \
+1. The values for the counts must be integers\
+2. The numOTUs must = the number of OTU columns\
+3. The "group" names (sample names) must match those in your design file.\
+\
+And remember the design file is only 2 column, group and treatment\
+\
+Things that don't matter in the shared file:\
+1. The label column can be whatever you want. \
+2. The OTU names (column names) don't have to say OTUX. For me they read gene_00001\
+\
+\
+``` \
+mothur > set.dir(input=~/Desktop/BMD_turkeys/AMR)\
+mothur > metastats(shared=rgi_count_table_norm.txt, design=rgi_design_file.txt) \
+mothur > quit()\
+```\
+\
+This ran pretty fast.\
+\
+Now I get only the time matched comparisons using the command line\
+\
+```\
+$ mv rgi_count_table_norm.arg.*_d7_*_d7.metastats metastats_out/\
+$ mv rgi_count_table_norm.arg.*_d35_*_d35.metastats metastats_out/\
+$ mv rgi_count_table_norm.arg.*_d78_*_d78.metastats metastats_out/\
+$ rm rgi_count_table_norm.arg*\
+```\
+\
+Now I will get the FDR correction and add in the resistance gene metadata. To do this I will use the FDR.r script \
+\
+Next I went to my RGI_clustering.r scripts to get totals for each gene, spectrum and mechanism using phyloseq. The output of that was an otu table for each level of classification:\
+\
+```\
+genes.shared\
+spectrum.shared\
+mechanism.shared\
+```\
+\
+So now I will run these shared files through metastats (mothur v.1.39.5) and then my FDR script to get differences.\
+\
+```\
+mothur > set.dir(input=~/Desktop/BMD_turkeys/AMR)\
+mothur > metastats(shared=genes.shared, design=rgi_design_file.txt) \
+mothur > metastats(shared=spectrum.shared, design=rgi_design_file.txt) \
+mothur > metastats(shared=mechanism.shared, design=rgi_design_file.txt) \
+mothur > quit()\
+```\
+\
+BLAST the mergem database against the assembly. \
+\
+I think I want to use the database as the database and the assembly ORFs as the query. \
+\
+Follow Adina's tutorial for running a local BLAST\
+\
+http://metag-crash-course.readthedocs.io/en/latest/blast/index.html\
+\
+First I edited the mergem.fasta file to remove spaces from the sequence names and to remove new line characters in the middle of the sequences.\
+\
+```\
+$ cat mergem.fasta | tr ' ' '_' > mergem_names.fasta\
+$ cat mergem_names.fasta | awk '!/^>/ \{ printf "%s", $0; n = "\\n" \} \
+/^>/ \{ print n $0; n = "" \} END \{ printf "%s", n \}' > mergem_names_noreturns.fasta\
+```\
+\
+Now to the BLAST\
+\
+```\
+# On the cris server\
+\
+$ makeblastdb -in mergem_names_noreturns.fasta -dbtype nucl\
+\
+# Test run\
+$ blastn -query d07ctrl.nucl.fasta.ns -db ../../AMR/mergem_names_noreturns.fasta -num_threads 20 -out d07ctrl.nucl.fasta.nsXmergem.tsv -outfmt 6\
+\
+# All samples against mergem.db\
+$ for d in d*nucl.fasta.ns; do echo $d; blastn -query $d -db ../../AMR/mergem_names_noreturns.fasta -num_threads 20 -out $d"Xmergem.tsv" -qcov_hsp_perc 80 -perc_identity 80 -outfmt 6; done\
+\
+$ for i in d*nsXmergem.tsv; do echo $i; python ../../scripts/best-hit.py $i > $i.best; done\
+\
+```\
+I decided I did not like this method, because if a predicted ORF was 80 bp and it matched something in mergem 100%, but the actual gene is 500 bp, it would still be called as the mergem gene even though it is only a small portion of the gene. I don't like that. Unfortunately I do not know of how to implement an alternative method. Calling ORFs and then annotating them is SOP. So I will use a maximum evalue cutoff of 1e-150 to get matches that are at least approximately 300bp and 98% identical.\
+\
+Now I need to convert the BLAST table into a .gff file. I will do this in R. I brought all the blast output tables to my computer\
+\
+```\
+scp cris_server:/home/tjohnson/BMD/data/time_trt_assemblies/mergemXd* Desktop/BMD_turkeys/AMR/mergem_blast/\
+```\
+\
+```\{r setup\}\
+knitr::opts_knit$set(root.dir = '~/Desktop/BMD_turkeys/AMR/mergem_blast/')\
+```\
+\
+To make a .gff from the abricate output\
+```\{r\}\
+library(dplyr)\
+library(tidyr)\
+\
+tables <- list.files("../abricate/")\
+i <- tables[1]\
+for(i in tables)\{\
+  abricate_out <- read.table(paste0("../abricate/",i))\
+  colnames(abricate_out) <- c("FILE",	"contig",	"start",	"stop",	"GENE",	"COVERAGE",	"COVERAGE_MAP",	"GAPS",	"PERC_COVERAGE",	"PERC_IDENTITY",	"DATABASE",	"ACCESSION")\
+  abricate_out <- filter(abricate_out, PERC_COVERAGE > 50)\
+  abricate_out$software <- "card"\
+  abricate_out$feature <- "arg"\
+  abricate_out$score <- "."\
+  abricate_out$frame <- 0\
+  abricate_out$strand <- "+"\
+  abricate_out$attribute <- paste0("gene_name ", '"', abricate_out$GENE, '";')\
+  abricate.gff <- select(abricate_out, contig, software, feature, start, stop, score, strand, frame, attribute)\
+  write.table(abricate.gff, file = paste0(i, ".gff"), quote = FALSE, row.names = FALSE, col.names = FALSE )\
+  write.table(abricate_out, file = paste0(i, ".filtered"), quote = FALSE, row.names = FALSE, col.names = FALSE )\
+\}\
+```\
+\
+To make a .gff from the blast output when using mgm orfs as the blast query\
+```\{r\}\
+library(dplyr)\
+library(tidyr)\
+\
+tables <- list.files()\
+tables <- tables[1:9]\
+i <- tables[1]\
+for(i in tables)\{\
+  mergem_blast <- read.table(i)\
+  colnames(mergem_blast) <- c("Query", "Target", "Perc_iden", "Align_len", "mismatches", "gaps", "qstart", "qend", "starget", "etarget", "evalue", "bit_score")\
+  test_out <- filter(mergem_blast, evalue < 1e-150)\
+  mergem_blast <- separate(data = mergem_blast, col = Query, into = c("gene_id", "orf_caller", "gene_len", "strand", "start", "stop", "contig"), sep = "\\\\|")\
+  mergem_blast <- separate(data = mergem_blast, col = contig, into = c("remove", "contig"), sep = ">")\
+  mergem_blast <- separate(data = mergem_blast, col = contig, into = c("contig", "contig_id", "flag", "multi", "contig_len"), sep = "_")\
+  mergem_blast <- unite(data = mergem_blast, col = contig, contig:contig_id, sep = "_")\
+  mergem_blast$software <- "mergem.blast"\
+  mergem_blast$feature <- "mge"\
+  mergem_blast$score <- "."\
+  mergem_blast$frame <- 0\
+  mergem_blast$attribute <- paste0("gene_id ",'"', mergem_blast$gene_id, '"; ', "gene_name ", '"', mergem_blast$Target, '";')\
+  mergem.gff <- select(mergem_blast, contig, software, feature, start, stop, score, strand, frame, attribute)\
+  write.table(mergem.gff, file = paste0(i, ".gff"), quote = FALSE, row.names = FALSE, col.names = FALSE, sep = "\\t" )\
+  \
+\}\
+```\
+\
+To make a .gff from the card output when using mgm orfs as the blast query\
+```\{r\}\
+library(dplyr)\
+library(tidyr)\
+\
+rgi_tax <- read.xlsx("../card_output/rgi_taxonomy.xlsx")\
+\
+tables <- grep("prot.fasta.ns.rgi_out.json.tsv.txt", list.files("../card_output/"), value = T)\
+i <- tables[1]\
+rm(mdr_summary)\
+rm(mdr_summary_temp)\
+rm(contig_len_summary)\
+for(i in tables)\{\
+  card_blast <- as.data.frame(readLines(paste0("../card_output/",i)))\
+  colnames(card_blast) <- "blast_out"\
+  card_blast <- separate(card_blast, blast_out, into = c("ORF_ID",	"CONTIG",	"START",	"STOP",	"ORIENTATION",	"CUT_OFF",	"PASS_EVALUE",	"Best_Hit_evalue",	"Best_Hit_ARO",	"Best_Identities",	"ARO",	"ARO_name",	"Model_type",	"SNP",	"AR0_category",	"bit_score",	"Predicted_Protein",	"CARD_Protein_Sequence",	"LABEL",	"ID"), sep = "\\t")\
+  card_blast <- card_blast[-1,]\
+  card_blast <- filter(card_blast, Model_type == "protein homolog model")\
+  card_blast <- separate(data = card_blast, col = ORF_ID, into = c("gene_id", "orf_caller", "gene_len", "strand", "start", "stop", "contig"), sep = "\\\\|")\
+  card_blast <- separate(data = card_blast, col = contig, into = c("remove", "contig"), sep = ">")\
+  card_blast <- separate(data = card_blast, col = contig, into = c("contig", "contig_id", "flag", "multi", "contig_len"), sep = "_")\
+  card_blast <- unite(data = card_blast, col = contig, contig:contig_id, sep = "_")\
+  card_blast$software <- "card.blast"\
+  card_blast$feature <- "arg"\
+  card_blast$score <- "."\
+  card_blast$frame <- 0\
+  card_blast$attribute <- paste0("gene_id ",'"', card_blast$gene_id, '"; ', "gene_name ", '"', card_blast$Best_Hit_ARO, '";')\
+  card.gff <- select(card_blast, contig, software, feature, start, stop, score, strand, frame, attribute)\
+  write.table(card.gff, file = paste0("../card_output/gff_files/", i, ".gff"), quote = FALSE, row.names = FALSE, col.names = FALSE, sep = "\\t" )\
+  \
+  mdr_summary_temp <- card_blast %>%\
+    group_by(contig) %>%\
+    count() %>%\
+    ungroup() %>%\
+    count(n)\
+    \
+  mdr_summary_temp$day <- i\
+  mdr_summary_temp$day <- gsub(".prot.fasta.ns.rgi_out.json.tsv.txt", "", mdr_summary_temp$day)\
+  mdr_summary_temp <- separate(mdr_summary_temp, day, into = c("day", "trt"), sep = 3)\
+  mdr_summary_temp$day <- gsub("d", "", mdr_summary_temp$day)\
+  mdr_summary_temp$day <- gsub("0", "", mdr_summary_temp$day)\
+  \
+  colnames(mdr_summary_temp)[1:2] <- c("num_ARGs", "num_contigs")\
+  \
+  if (exists("mdr_summary")) \{\
+      mdr_summary <- rbind(mdr_summary, mdr_summary_temp)\
+    \} else \{\
+      mdr_summary <- mdr_summary_temp\
+    \}\
+\
+  card_blast_key <- merge(card_blast, rgi_tax, by = "Best_Hit_ARO", all.x = T)\
+  contig_len_temp <- select(card_blast_key, Best_Hit_ARO, contig_len, AR0_category.y, Spectrum)\
+  contig_len_temp$day <- i\
+  contig_len_temp$day <- gsub(".prot.fasta.ns.rgi_out.json.tsv.txt", "", contig_len_temp$day)\
+  contig_len_temp <- separate(contig_len_temp, day, into = c("day", "trt"), sep = 3)\
+  contig_len_temp$day <- gsub("d", "", contig_len_temp$day)\
+  contig_len_temp$day <- gsub("0", "", contig_len_temp$day)\
+\
+  if (exists("contig_len_summary")) \{\
+    contig_len_summary <- rbind(contig_len_summary, contig_len_temp)\
+  \} else \{\
+    contig_len_summary <- contig_len_temp\
+  \}\
+  \
+\}\
+str(mdr_summary)\
+mdr_summary$day <- factor(mdr_summary$day, levels = c(7, 35, 78))\
+\
+ggplot(filter(complete(mdr_summary, day, trt, num_ARGs), num_ARGs > 1), aes(x = num_ARGs, y = num_contigs, fill = trt)) + \
+  facet_grid(.~day) +\
+  geom_bar(stat = "identity", position = "dodge") +\
+\
+\
+  #scale_fill_manual(values = my_colors) +\
+  # Remove x axis title\
+  #theme(axis.title.x = element_blank()) + \
+  #ylim(c(0,1)) +\
+  guides(fill = guide_legend(reverse = F, keywidth = .5, keyheight = .5, ncol = 1))\
+  #theme(legend.text=element_text(size=8)) +\
+  #theme(legend.position="bottom") +\
+  #theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +\
+  #ylab(paste0("Relative Abundance (Family > ", abund_filter * 100,"%) \\n")) +\
+  #ggtitle("Family Composition of turkey GI tract \\n and impact of BMD treatment") \
+ggsave("../card_output/mdr_contigs.png", height = 3, width = 6)\
+```\
+Look into the contig lengths\
+\
+```\{r\}\
+contig_len_summary$contig_len <- gsub("len=", "", contig_len_summary$contig_len)\
+contig_len_summary$contig_len <- as.numeric(contig_len_summary$contig_len)\
+contig_len_summary$Spectrum <- factor(contig_len_summary$Spectrum)\
+contig_len_summary$day <- factor(contig_len_summary$day, levels = c(7,35,78))\
+contig_len_summary$trt <- factor(contig_len_summary$trt)\
+contig_len_summary$len_mb\
+str(contig_len_summary)\
+write.table(contig_len_summary, file = "../card_output/contig_len_summary.tsv", quote = F, row.names = F, sep = "\\t")\
+\
+ggplot(contig_len_summary, aes(x = Spectrum, y = contig_len)) +\
+  facet_grid(.~trt) +\
+  geom_boxplot(aes(color = day)) +\
+  #scale_fill_manual(values = my_colors) +\
+  # Remove x axis title\
+  #theme(axis.title.x = element_blank()) +\
+  #ylim(c(0,1)) +\
+  guides(fill = guide_legend(reverse = F, keywidth = .5, keyheight = .5, ncol = 3)) +\
+  theme(legend.text=element_text(size=8)) +\
+  #theme(legend.position="bottom") +\
+  theme(axis.text.x = element_text(angle = 270, hjust = 1, vjust = 0.5, size = 10)) +\
+  coord_flip() +\
+  #geom_hline(yintercept=0, color = 'black') \
+  scale_y_log10()\
+\
+#+\
+#ylab(paste0("Relative Abundance (Family > ", abund_filter * 100,"%) \\n")) +\
+#ggtitle("Family Composition of turkey GI tract \\n and impact of BMD treatment")\
+ggsave("../card_output/contig_lengths_trt.png", height = 8, width = 15)\
+```}

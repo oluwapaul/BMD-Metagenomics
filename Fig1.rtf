@@ -1,0 +1,767 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2709
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 library(stringr)\
+library(tidyr)\
+library(dplyr)\
+library(vegan)\
+library(ggplot2)\
+library(phyloseq)\
+library(FSA)\
+library(rareNMtests)\
+library(ggpubr)\
+library(DescTools)\
+library(forcats)\
+library(Rfast)\
+library(reshape2)\
+library(DESeq2)\
+library(Hmisc)\
+library(plyr)\
+library(reshape2)\
+\
+if (!require("BiocManager", quietly = TRUE))\
+  install.packages("BiocManager")\
+\
+\
+BiocManager::install("usdm")\
+\
+BiocManager::install("DESeq2")\
+\
+BiocManager::install("phyloseq")\
+\
+BiocManager::install("qiime2R")\
+\
+my_colors <- c(\
+  '#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c',\
+  '#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928', \
+  "#CBD588", "#5F7FC7", "orange","#DA5724", "#508578", "#CD9BCD",\
+  "#AD6F3B", "#673770","#D14285", "#652926", "#C84248", \
+  "#8569D5", "#5E738F","#D1A33D", "#8A7C64", "#599861", "gray", "black"\
+)\
+\
+\
+setwd(dir = "~/Desktop/Tim-Lab/BMD/R_script")\
+\
+#########################################\
+#Read in the data\
+#########################################\
+\
+#countdata <- read.delim("count-tables-from-Carmen/rgi_count_table.txt", \
+#sep = "\\t", \
+#header = T, \
+#row.names = 1, \
+#nrow = length(readLines("count-tables-from-Carmen/rgi_count_table.txt")) - 2)\
+#countdata <- read.delim("count-tables-from-Carmen/Pfam_count_table-tim.txt", sep = "\\t", header = T)\
+countdata <- read.delim("TIGR_count_table.txt", \
+                        sep = "\\t", \
+                        header = T, \
+                        row.names = 1, \
+                        nrow = length(readLines("TIGR_count_table.txt")) - 2)\
+                        #nrow = 10000)\
+\
+#tail(countdata), why was d07sub045 deleted ?\
+countdata <- countdata[ , -which(names(countdata) %in% c("d07sub045"))] \
+\
+countdata <- as.data.frame(t(as.matrix(countdata)))\
+\
+#str(countdata)\
+\
+meta <- read.csv("mg_metadata.csv")\
+meta <- meta[-which(meta$sample %in% c("d07sub045")), ] \
+\
+str(meta)\
+meta$day <- as.factor(meta$day)\
+meta$antibiotic  <- as.factor(meta$antibiotic)\
+meta$group <- factor(meta$group, levels = c("Ctrl_7", "Sub_7", "Ther_7", "Ctrl_35", "Sub_35", "Ther_35", "Ctrl_78", "Sub_78", "Ther_78"))\
+str(meta)\
+\
+#Now I need to work on the gene lengths and sequence counts per sample...\
+\
+#I have a file with the total obtained counts at \
+#  /Volumes/ag_ansc/Users/john2185/USDA_laptop/Desktop/BMD_turkeys/stderr.12495.sn-mem-0\
+\
+# This is the report log from trimmomatic and I parsed out of that the total number of sequences. \
+# For example, each sample has something like this:\
+#  Input Read Pairs: 429965 \
+#  Both Surviving: 377630 (87.83%) \
+#  Forward Only Surviving: 35729 (8.31%) \
+#  Reverse Only Surviving: 1393 (0.32%) \
+#  Dropped: 15213 (3.54%)\
+\
+#I used the "Input Read Pairs" number. These are confirmed by numbers I had calculated earlier on a subset of the samples.\
+\
+taxonomy <- read.delim("TIGR_func_full_tim.txt", sep = "\\t", header = T)\
+tax_key <- read.delim("TIGR_contig_geneid_score_evalue_TIGRfam.txt", sep = "\\t", header = F)\
+\
+str(taxonomy)\
+\
+colnames(taxonomy)\
+\
+colnames(tax_key) <- c("contig_id", "gene_id", "score", "evalue", "TIGR_id")\
+\
+tax_key <- separate(data = tax_key, col = contig_id, into = c("NODE", "Node", "length", "gene_length", "cov", "gene_coverage"), sep = "_", remove = F)\
+tax_key <- tax_key[ , -which(names(tax_key) %in% c("NODE","length", "cov"))]\
+tax_key_filtered <- tax_key %>% \
+  arrange(evalue) %>% \
+  distinct(gene_id, .keep_all = TRUE)\
+\
+tax_merge <- inner_join(tax_key_filtered, taxonomy, by = c("TIGR_id"="TIGRFAM"))\
+tax_merge <- merge(tax_key_filtered, taxonomy, by.x = "TIGR_id", by.y = "TIGRFAM")\
+tail(tax_merge)\
+\
+tax_key2 <- tax_key\
+rownames(tax_key2) <- tax_key2 [,2]\
+\
+uni_tax_key <- unique(tax_key)\
+tax_anno <- inner_join(tax_key, countdata, by = c("gene_id"=""))\
+tax_anno <- merge(tax_key, countdata, by.x = "gene_id", by.y =0)\
+\
+uni_tax_key <- sort(unique(uni_tax_key$gene_id))\
+unique(sort(uni_tax_key$gene_id))\
+\
+sample_reads <- read.delim("stderr.12495.sn-mem-0", sep = "\\t", header = F, stringsAsFactors = FALSE)\
+colnames(sample_reads) <- c("Sample_id", "Total_seqs")\
+sample_reads$perMillion <- sample_reads$Total_seqs / 1000000\
+sample_reads2 <- sample_reads %>%\
+  separate(Sample_id, into = "short_name", remove = F)\
+\
+#warning is normal\
+\
+sample_reads2 <- sample_reads2[-which(sample_reads2$short_name %in% c("d07sub045")), ]\
+\
+TIGR_totals <- rowSums(countdata)\
+\
+names(TIGR_totals) == sample_reads2$short_name  # the two dataframes are in the same order...\
+\
+sample_reads2$TIGRtotals <- TIGR_totals\
+names(TIGR_totals)\
+sample_reads2_meta <- merge(sample_reads2, meta, by.x = "short_name", "sample")\
+\
+ggplot(sample_reads2_meta, aes(x=Total_seqs, y=TIGRtotals, )) + \
+  geom_point(aes(color = day, shape = antibiotic)) +\
+  #geom_smooth(method = lm, size = 1, color = antibiotic) +\
+  #geom_line(aes(color = antibioti))+\
+  theme_classic()\
+ggsave("output/ORF_Reads_total_TIGR.png", height = 4, width = 6)\
+\
+\
+ggplot(sample_reads2_meta, aes(x=Total_seqs, y=TIGRtotals, color = antibiotic)) +\
+  geom_point() + geom_smooth(methods="lm", se = FALSE) +\
+  theme_classic()\
+ggsave("output/antibiotics_ORF_Reads_total_TIGR.png", height = 4, width = 6)\
+ggsave("output/day_ORF_Reads_total_TIGR.png", height = 4, width = 6)\
+\
+\
+ggplot(sample_reads2_meta, aes(x=Total_seqs, y=TIGRtotals, )) + \
+  geom_point(aes(color = day, shape = antibiotic)) +\
+  geom_smooth(methods="lm", level=0.95) +\
+  #annotate("text",x=12.5,y=15.25,label=c(corre$estimate,corre$p.value),parse=TRUE)+\
+  #geom_smooth(method = lm, size = 1, color = antibiotic) +\
+  #geom_line(aes(color = antibioti))+\
+  theme_classic()\
+ggsave("output/line_ORF_Reads_total_TIGR.png", height = 4, width = 6)\
+\
+\
+cor(sample_reads2_meta$Total_seqs, sample_reads2_meta$TIGRtotals, method = c("pearson"))\
+cor.test(sample_reads2_meta$Total_seqs, sample_reads2_meta$TIGRtotals, method=c("pearson"))\
+\
+cor(sample_reads2_meta$Total_seqs, sample_reads2_meta$TIGRtotals, method = c("kendall"))\
+cor.test(sample_reads2_meta$Total_seqs, sample_reads2_meta$TIGRtotals, method=c("kendall"))\
+\
+cor(sample_reads2_meta$Total_seqs, sample_reads2_meta$TIGRtotals, method = c("spearman"))\
+cor.test(sample_reads2_meta$Total_seqs, sample_reads2_meta$TIGRtotals, method=c("spearman"))\
+\
+#tax.clean <- tax_merge[,c(-2:-5, -7:-9, -14:-15)]\
+  \
+####Normalization and Statistics\
+##This is a long step. If you have already completed this step, run the following \
+##line to avoid the long step of rounding (Line 151)\
+\
+#rpm_final <- read.delim("output/rpkm_count_table.txt", \
+#                        sep = "\\t", \
+                        #header = T,\
+#                        nrow = 100)\
+                        #row.names = 1) \
+\
+# Kata, in her breast milk microbiome paper normalized by 16S copies \
+# rather than total reads, but that's a minor difference and rpkm is \
+# widely used. So I need to make this normalized table.\
+\
+#What we need:\
+#count table: countdata (uses short sample names)\
+#gene lengths: I don't have the gene lengths so I will just normalize by total sequences per sample\
+#reads per sample: samples_reads2\
+\
+#What I need to do is (count table) / (per million reads per sample)\
+\
+rpm <- sweep(countdata, 1, sample_reads2$perMillion, '/')\
+\
+\
+#gene_lengths <- taxonomy2[c("gene_id", "length")]\
+#row.names(gene_lengths) <- taxonomy$gene_id\
+#I don't know the gene lengths. I will just make them  all equal at 1.5 kb\
+#gene_lengths$length_kb <- gene_lengths$length/1000 # get gene length in kilobases\
+#rpm <- as.data.frame(t(as.matrix(rpm)))\
+#rpm_lengths <- merge(gene_lengths, rpm, by.x = "gene_id", by.y = 0)\
+#rpkm <- rpm_lengths[,-1:-3]/rpm_lengths$length_kb\
+min(rpm[rpm>0])\
+rpm2 <- rpm * 100\
+\
+\
+## Check if all non-zero values are greater than 1\
+min(rpm2[rpm2>0])\
+## Check output to be >1\
+\
+#rpkm3 <- round(rpkm2)\
+## rpm_final <- cbind(rpm_lengths$gene_id,rpkm4)\
+## colnames(rpm_final[1,]) <- "gene_id"\
+## rownames(rpm_final) <- rpm_final[,1]\
+## rpm_final <- rpm_final[,-1]\
+\
+#rpm_final <- rpkm3\
+rpm_final <- as.data.frame(Round(as.matrix(rpm2)))\
+\
+\
+min(rpm_final[rpm_final>0])\
+\
+\
+##rpm_final <- as.data.frame(t(as.matrix(rpm_final)))\
+write.table(rpm_final, "output/categ_rpm_count_table.txt", sep = "\\t", quote = F, row.names = T)\
+\
+\
+#########################################\
+#beta diversity\
+#########################################\
+\
+#phyloseq-ize the rpkm table\
+rpm_deseq <- rpm_final\
+\
+#phyloseq-ize the taxonomy\
+tax.clean <- tax_merge[,c(-2:-5, -7:-9, -14:-15)]\
+row.names(tax.clean) <- tax.clean[,2]\
+tax.clean <- tax.clean[,-2]\
+\
+#phyloseq-ize the metadata\
+row.names(meta) <- meta[,1]\
+meta <- meta[,-1]\
+\
+#Test run\
+#rpm_test <- rpm_deseq[,c(1,2,3,4,5)]\
+\
+\
+#Now make the phyloseq object:\
+\
+#OTU.physeq2 = otu_table(as.matrix(rpm_test), taxa_are_rows=FALSE)\
+#For other analysis of functional categories\
+OTU.physeq = otu_table(as.matrix(rpm_final), taxa_are_rows=FALSE)\
+\
+tax.physeq = tax_table(as.matrix(tax.clean))\
+meta.physeq = sample_data(meta)\
+\
+tax.physeq2 = tax_table(as.matrix(tax.clean2))\
+\
+#We then merge these into an object of class phyloseq.\
+#For other analysis of functional categories\
+physeq_deseq = phyloseq(OTU.physeq, tax.physeq, meta.physeq)\
+taxa_names(OTU.physeq)\
+taxa_names(tax.physeq)\
+\
+taxa.summary <- physeq_deseq %>%\
+  tax_glom(taxrank = ml[1], NArm = FALSE) %>%   # agglomerate at "ml" level\
+  psmelt()  %>%                               # Melt to long format\
+  group_by(Sample, get(ml)) %>%\
+  summarise(Abundance.sum=sum(Abundance)) \
+taxa.summary <- as.data.frame(taxa.summary)\
+colnames(taxa.summary)[2] <- ml\
+glom_rpm <- dcast(taxa.summary, Sample ~ get(ml))\
+str(glom_rpm)\
+row.names(glom_rpm) <- glom_rpm$Sample\
+glom_rpm <- glom_rpm[,-1]\
+\
+# To check if there are zero values\
+min(glom_rpm[glom_rpm>0])\
+min(glom_rpm)\
+\
+glom_rpm <- glom_rpm + 1\
+\
+write.table(glom_rpm, "output/function_rpm.tsv", quote = F, sep = "\\t", col.names = NA)\
+\
+#species need to be in columns and samples in rows\
+#If you want to run analysis based on the functional categories, run this step\
+#But If you want to run the analysis with the ORFs, then skip this step (i.e. dont make glom_rpm to be rpm_final)  \
+rpm_final <- glom_rpm\
+\
+#########################################\
+##First lets do some diversity statistics:\
+#########################################\
+#Withouth unannotated\
+rpm_final <- read.delim("output/function_rpm.tsv", sep = "\\t", header = T,check.names=FALSE, row.names = 1)\
+\
+row.names(rpm_final) <- rpm_final$X\
+rpm_final <- rpm_final[,-1]\
+glom_rpm <- rpm_final\
+\
+veganCovEllipse <- function (cov, center = c(0,0), scale = 1, npoints = 100)\{\
+  theta <- (0:npoints) * 2 * pi/npoints\
+  Circle <- cbind(cos(theta), sin(theta))\
+  t(center + scale * t(Circle %*% chol(cov)))\
+\}\
+\
+pairwise.adonis <- function(x,factors, sim.method, p.adjust.m)\
+\{\
+  library(vegan)\
+  co = as.matrix(combn(unique(factors),2))\
+  pairs = c()\
+  F.Model =c()\
+  R2 = c()\
+  p.value = c()\
+  \
+  for(elem in 1:ncol(co))\{\
+    ad = adonis(x[factors %in% c(as.character(co[1,elem]),as.character(co[2,elem])),] ~\
+                  factors[factors %in% c(as.character(co[1,elem]),as.character(co[2,elem]))] , method =sim.method, permutations = 9999);\
+    pairs = c(pairs,paste(co[1,elem],'vs',co[2,elem]));\
+    F.Model =c(F.Model,ad$aov.tab[1,4]);\
+    R2 = c(R2,ad$aov.tab[1,5]);\
+    p.value = c(p.value,ad$aov.tab[1,6])\
+  \}\
+  p.adjusted = p.adjust(p.value,method=p.adjust.m)\
+  pairw.res = data.frame(pairs,F.Model,R2,p.value,p.adjusted)\
+  return(pairw.res)\
+\}\
+\
+\
+#Continue beta diversity\
+dist.matr.bray <- vegdist(rpm_final)\
+\
+\
+mds <- metaMDS(dist.matr.bray, k = 2,trymax = 1000, autotransform = FALSE)\
+\
+# the stress of an ordination is an important metric to report.  Basically it tells you how well the spatial distances given in the NMDS represent the actual distances or similarities from your distance matrix\
+# a lower stress means the spatial distances in your NMDS more accurately represent your calculated similarites\
+\
+mds$stress\
+\
+# I like to merge my NMDS coordinates in together with my metadata to make one big dataframe, I think this makes plotting easier later on\
+\
+nmds <-as.data.frame(mds$points)\
+nmds$group <- rownames(nmds)\
+metanmds <- merge(meta, nmds, by.x = 'sample', by.y = 'group')\
+str(metanmds)\
+\
+\
+\
+# this generates a dataframe containing the group centroids\
+\
+NMDS.mean <- aggregate(metanmds[,c("MDS1", "MDS2")], list(group=metanmds$group), mean)\
+colnames(NMDS.mean) <- c('design', 'groupX', 'groupY')\
+\
+# merging the group centroids with the rest of the NMDS data #\
+metanmds <- merge(metanmds, NMDS.mean , by.x = 'group', by.y='design')\
+\
+str(metanmds)\
+metanmds$day <- factor(metanmds$day)\
+\
+\
+### ok now we have our metaNMDS dataframe, lets try some plotting ###\
+### super brief into to ggplot2, you feed in data to the ggplot() function then add different 'geoms' layer by layer\
+### you map aspects of your data to visual features using aesthetics 'aes()'\
+### only things that you want to change according to your data should go inside aes()\
+### things you want to be the same for all aspects of your plot should go outside of aes()\
+\
+ggplot(metanmds, aes(x=MDS1, y=MDS2)) + geom_point(color='green')\
+\
+theme_set(theme_grey())\
+ggplot(metanmds, aes(x=MDS1, y=MDS2)) + \
+  geom_point(aes(color=antibiotic))\
+\
+ggplot(metanmds, aes(x=MDS1, y=MDS2)) + \
+  geom_point(aes(color=day)) +\
+  labs(x='NMDS 1', y= 'NMDS 2', caption = paste('Ordination stress: ', round(mds$stress, digits = 3)))\
+ggsave("output/categ_day_bray_NMDS_all.ellipses.png", height = 4, width = 6)\
+\
+ggplot(metanmds, aes(x=MDS1, y=MDS2)) + \
+  geom_point(aes(color = antibiotic, shape=day))\
+\
+ggplot(metanmds, aes(x=groupX, y=groupY)) +\
+  geom_point(aes(color=antibiotic, shape=day))\
+\
+ggplot(metanmds, aes(x=groupX, y=groupY)) +\
+  geom_point(aes(color=antibiotic, shape=day)) + \
+  geom_segment(aes(x=MDS1, y=MDS2, xend=groupX, yend=groupY, color=antibiotic), size = .3)  +\
+  labs(x='NMDS 1', y= 'NMDS 2', caption = paste('Ordination stress: ', round(mds$stress, digits = 3)))\
+ggsave("output/categ_count_table_bray_NMDS_allpoints.png", height = 4, width = 6)\
+\
+\
+# Lets try some elipses around our groups\
+\
+ggplot(metanmds, aes(x=MDS1, y=MDS2, color=antibiotic, shape=day)) +\
+  geom_point() + \
+  #geom_segment(aes(x=MDS1, y=MDS2, xend=groupX, yend=groupY, color=antibiotic), size = .3)  +\
+  stat_ellipse(level = 0.95, type = "t") +\
+  labs(x='NMDS 1', y= 'NMDS 2', caption = paste('Ordination stress: ', round(mds$stress, digits = 3))) +\
+  theme_classic()\
+ggsave("output/categ_count_table_bray_NMDS_allpoints.png", height = 4, width = 6)\
+\
+\
+########## ellipse #############\
+\
+# this is a vegan function to plot ordinations, we are using this to get the ordination information into a form where we can use ggplot2\
+# vegan has pretty good plotting fucntionality but i haven't really learned it\
+# we are using this vegan function to calculate standard error elipses around each of our groups\
+\
+######\
+# there is some weirdness in R where the order of your data is critical, and sometimes things get reordered when you run\
+# functions, you shouldn't assume that your samples are in the same order in an NMDS object as they are in your input data\
+# this is how I check this:\
+\
+nmds$group == metanmds$sample  # this is a problem, we need these two dataframes in the same order...\
+#metanmds$group <- as.character(metanmds$group)\
+metanmds <- metanmds[match(nmds$group,metanmds$sample),] # ok I think this works as long as $group isnt a factor...\
+nmds$group == metanmds$sample \
+#check that all are 'TRUE'\
+# hurray!\
+############\
+\
+ord <- ordiellipse(mds, metanmds$group, label = TRUE, conf = .95, kind = 'se', draw = 'none')\
+\
+# this little loop generates a dataframe containing the ellipse data for each group\
+\
+df_ell <- data.frame()\
+for (d in levels(metanmds$group))\{\
+  df_ell <- rbind(df_ell, cbind(as.data.frame(with(metanmds[metanmds$group == d,],\
+                                                   veganCovEllipse(ord[[d]]$cov, ord[[d]]$center, ord[[d]]$scale))),group=d))\
+\}\
+\
+colnames(df_ell) <- c('MDS1', 'MDS2', 'design') # just making it so our column names are consistent\
+\
+# now we are adding metadata to the ellipse dataframe\
+# probably an easier way to do this but oh well...\
+\
+meta_sub <- meta[,-1]\
+meta_sub2 <- unique(meta_sub)\
+df_ell2 <- merge(df_ell, meta_sub2, by.x = 'design', by.y = 'group')\
+str(df_ell2)\
+df_ell2$day <- factor(df_ell2$day)\
+\
+ggplot(metanmds, aes(x=groupX, y=groupY)) +\
+  geom_point(aes(color=antibiotic, shape=day)) + \
+  geom_path(data = df_ell2, aes(x=MDS1, y=MDS2, group=design, color=antibiotic)) +\
+  labs(x='NMDS 1', y= 'NMDS 2', caption = paste('Ordination stress: ', round(mds$stress, digits = 3))) +\
+  theme_classic()\
+ggsave("output/categ_count_table_bray_NMDS.png", height = 4, width = 6)\
+\
+ggplot(metanmds, aes(x=groupX, y=groupY)) +\
+  geom_point(aes(color=antibiotic, shape=day)) + \
+  geom_path(data = df_ell2, aes(x=MDS1, y=MDS2, group=design, color=antibiotic)) +\
+  geom_segment(aes(x=MDS1, y=MDS2, xend=groupX, yend=groupY, color=antibiotic), size = .3) +\
+  labs(x='NMDS 1', y= 'NMDS 2', caption = paste('Ordination stress: ', round(mds$stress, digits = 3))) +\
+  theme_classic()\
+ggsave("output/categ_count_table_bray_NMDS_all.ellipses.png", height = 4, width = 6)\
+\
+#OK so it seems like something is going on. Would be good to run some PERMANOVAs to see what is happening.\
+\
+\
+\
+###################################### ###########################################\
+# stats whatnot\
+\
+# this website is a great resource https://sites.google.com/site/mb3gustame/\
+\
+# PERMANOVA with Adonis\
+# are the differences we are seeing in the NMDS statistically significant?\
+# PERMANOVA tests for differences in position and dispersion at the same time, if you get a significant result you need\
+# to determind if the dispersion of your group is partially responsible\
+\
+##Overall PERMANOVA\
+rownames(rpm_final) == meta$sample ## good,  all these values need to be "TRUE"\
+PERMANOVA_out <- adonis2(rpm_final ~ day + antibiotic + day:antibiotic, data = meta)\
+\
+write.table(PERMANOVA_out,"output/categ_Adonis_overall.csv",sep=",", row.names = TRUE) \
+\
+# this will run a PERMANOVA on all possible pairwise comparisons in your data based on the factor you feed it.\
+\
+#PW.Adonisd7 <- pairwise.adonis(x = rpm_final[1:30,], factors = c(rep("ctrl", 10), rep("sub", 10), rep("ther", 10)), sim.method="bray", p.adjust.m = "none")\
+PW.Adonisd7 <- pairwise.adonis(x = rpm_final[1:29,], factors = c(rep("ctrl", 10), rep("sub", 9), rep("ther", 10)), sim.method="bray", p.adjust.m = "none")\
+PW.Adonisd7$day <- 7\
+#PW.Adonisd35 <- pairwise.adonis(x = rpm_final[31:60,], factors = c(rep("ctrl", 10), rep("sub", 10), rep("ther", 10)), sim.method="bray", p.adjust.m = "none")\
+PW.Adonisd35 <- pairwise.adonis(x = rpm_final[30:59,], factors = c(rep("ctrl", 10), rep("sub", 10), rep("ther", 10)), sim.method="bray", p.adjust.m = "none")\
+PW.Adonisd35$day <- 35\
+#PW.Adonisd78 <- pairwise.adonis(x = rpm_final[61:92,], factors = c(rep("ctrl", 9), rep("sub", 13), rep("ther", 10)), sim.method="bray", p.adjust.m = "none")\
+PW.Adonisd78 <- pairwise.adonis(x = rpm_final[60:91,], factors = c(rep("ctrl", 9), rep("sub", 13), rep("ther", 10)), sim.method="bray", p.adjust.m = "none")\
+PW.Adonisd78$day <- 78\
+PW.Adonis <- rbind(PW.Adonisd7, PW.Adonisd35)\
+PW.Adonis <- rbind(PW.Adonis, PW.Adonisd78)\
+PW.Adonis$BH.corr <- p.adjust(PW.Adonis$p.value, method = "BH", n = length(PW.Adonis$p.value))\
+PW.Adonis$significant <- ifelse(PW.Adonis$p.value<0.05, "p < 0.05", "p > 0.05")\
+  \
+write.table(PW.Adonis,"output/categ_Adonis_pairwise_Results.csv",sep=",", row.names = FALSE) \
+\
+PW.Adonis_day <- pairwise.adonis(x = rpm_final, factors = c(rep("d7", 29), rep("d35", 30), rep("d78", 32)), sim.method="bray", p.adjust.m = "none")\
+write.table(PW.Adonis_day,"output/categ_Adonis_pairwise_day.csv",sep=",", row.names = TRUE) \
+\
+\
+PW.Adonis %>%  \
+  ggplot(aes(x=day, y=F.Model, shape=pairs, color = significant)) +\
+  geom_line(color = "black") +\
+  geom_vline(xintercept=35, color = 'black', linetype = "dotted") + \
+  geom_point(size = 3) +\
+  theme_classic()\
+  #ylim(c(0,4)) +\
+  #facet_grid(.~location) +\
+  #geom_text(aes(label = BF.corr), hjust=0, vjust=0, size=3) +\
+  ggtitle('Dissimilarity of cecal microbiota over time', subtitle = 'PERMANOVA F statistic at each timepoint, how different are the diets at each timepoint? ') \
+ggsave("output/categ_Fstat.png", height = 3, width = 6)\
+\
+#########################################\
+#ARG Dissimilarity change over time\
+\
+Adonis_ARG <- read.csv ("Adonis_ARGs-Results.csv", header=TRUE, sep=",")\
+Adonis_ARG$day  <- as.factor(Adonis_ARG$day)\
+\
+Adonis_ARG %>%  \
+  ggplot(aes(x=day, y=R2, shape=pairs, color = significant)) +\
+  geom_line(color = "black") +\
+  geom_vline(xintercept=35, color = 'black', linetype = "dotted") + \
+  geom_point(size = 3) +\
+  theme_classic() +\
+#ylim(c(0,4)) +\
+#facet_grid(.~location) +\
+#geom_text(aes(label = BF.corr), hjust=0, vjust=0, size=3) +\
+ggtitle('PERMANOVA of cecal ARGs overtime', subtitle = 'R sq. how different are the diets at each timepoint? ') \
+ggsave("output/ARG_R2.png", height = 3, width = 6)\
+\
+#########################################\
+##\
+##   Alpha Diversity\
+##\
+#########################################\
+str(rpm_final)\
+meta$H <- diversity(rpm_final)\
+meta$obs_n<-specnumber(rpm_final)\
+meta$pielou_e <- meta$H/log(specnumber(rpm_final))\
+rpm_sums <- rowSums(rpm_final)\
+\
+names(rpm_sums) == sample_reads2_meta$short_name  # the two dataframes are in the same order...\
+\
+sample_reads2_meta$rpm_sum <- rpm_sums\
+\
+ggplot(sample_reads2_meta, aes(x=Total_seqs, y=rpm_sum, )) + \
+  geom_point(aes(color = day, shape = antibiotic)) +\
+  theme_classic() \
+ggsave("output/categ_Reads_total_TIGR.png", height = 4, width = 6)\
+\
+ggplot(meta, aes(antibiotic, H)) +\
+  geom_boxplot() +\
+  theme(axis.text.x=element_text(angle=270, hjust=0, vjust=0.5)) +\
+  ylab ("Shannon") +\
+  theme_classic()\
+  #facet_grid(.~day)\
+ggsave("output/categ_Shannon_trt.png", height = 3.5, width = 3.2)\
+\
+ggplot(meta, aes(day, H)) +\
+  geom_boxplot() +\
+  theme(axis.text.x=element_text(angle=270, hjust=0, vjust=0.5)) +\
+  ylab ("Shannon") +\
+  theme_classic()\
+#facet_grid(.~day)\
+ggsave("output/categ_Shannon_day.png", height = 3.5, width = 2.5)\
+\
+ggplot(meta, aes(antibiotic, H)) +\
+  geom_boxplot() +\
+  theme(axis.text.x=element_text(angle=270, hjust=0, vjust=0.5)) +\
+  theme_classic() +\
+  ylab ("Shannon") +\
+  facet_grid(.~day)\
+ggsave("output/categ_Shannon.png", height = 6, width = 9)\
+\
+ggplot(meta, aes(antibiotic, pielou_e)) +\
+  geom_boxplot() +\
+  theme(axis.text.x=element_text(angle=270, hjust=0, vjust=0.5)) +\
+  theme_classic() +\
+  facet_grid(.~day)\
+ggsave("output/categ_pielou_e.png", height = 4, width = 6)\
+\
+ggplot(meta, aes(antibiotic, pielou_e)) +\
+  geom_boxplot() +\
+  theme(axis.text.x=element_text(angle=270, hjust=0, vjust=0.5)) +\
+  theme_classic()\
+#facet_grid(.~day)\
+ggsave("output/categ_pielou_e_trt.png", height = 3.5, width = 2.5)\
+\
+ggplot(meta, aes(day, pielou_e)) +\
+  geom_boxplot() +\
+  theme(axis.text.x=element_text(angle=270, hjust=0, vjust=0.5)) +\
+  theme_classic()\
+#facet_grid(.~day)\
+ggsave("output/categ_pielou_e_day.png", height = 3.5, width = 2.5)\
+\
+ggplot(meta, aes(antibiotic, obs_n)) +\
+  geom_boxplot() +\
+  theme(axis.text.x=element_text(angle=270, hjust=0, vjust=0.5)) +\
+  facet_grid(.~day) +\
+  ylab ("Number of ORF") +\
+  xlab ("Antibiotics") +\
+  theme_classic() + \
+  theme(axis.title.x = element_text(color="black", size=24), axis.title.y = element_text(color="black", size=22)) + \
+  theme(axis.text.x = element_text(color = "black", size = 16), axis.text.y = element_text(color = "black", size = 16))\
+ggsave("output/categ_obs_otus4.png", height = 7, width = 12)\
+\
+ggplot(meta, aes(antibiotic, obs_n)) +\
+  geom_boxplot() +\
+  theme(axis.text.x=element_text(angle=270, hjust=0, vjust=0.5)) +\
+  ylab ("Number of ORF") +\
+  theme_classic()\
+#facet_grid(.~day)\
+ggsave("output/categ_obs_n_trt.png", height = 3.5, width = 3.2)\
+\
+ggplot(meta, aes(day, obs_n)) +\
+  geom_boxplot() +\
+  theme(axis.text.x=element_text(angle=270, hjust=0, vjust=0.5)) +\
+  ylab ("Number of ORF") +\
+  theme_classic()\
+#facet_grid(.~day)\
+ggsave("output/categ_obs_n_day.png", height = 3.5, width = 2.5)\
+\
+#Create 2x2 plot environment \
+par(mfrow = c(2, 2))\
+\
+#Plots\
+hist(meta$H, main="Shannon diversity", xlab="", breaks=10)\
+hist(1/meta$pielou_e, main="Pielou evenness", xlab="", breaks=10)\
+hist(meta$obs_n, main="Richness", xlab="", breaks=10)\
+\
+#To test for normalcy statistically, we can run the Shapiro-Wilk test of normality.\
+shapiro.test(meta$H)\
+shapiro.test(1/meta$pielou_e)\
+shapiro.test(meta$obs_n)\
+\
+ggqqplot(meta$H, title = "Shannon")\
+ggqqplot(meta$pielou_e, title = "Evenness")\
+ggqqplot(meta$obs_n, title = "Richness")\
+\
+qp.pd.all = glm(H ~ day * antibiotic, data=meta, family="quasipoisson")\
+summary(qp.pd.all)\
+# From that result, it appears the day and antibiotic is significant, but \
+# the interaction is not. So I will test the time match samples\
+\
+#Overall test for antibiotic\
+kruskal.test(H ~ antibiotic, data=meta)\
+# Kruskal-Wallis chi-squared = 6.1183, df = 2, p-value = 0.04693\
+KW_post_hoc <- dunnTest(H ~ antibiotic, data=meta, method = "bh")\
+#                    Comparison         Z    P.unadj      P.adj\
+#1     Control - Subtherapeutic 2.1042627 0.03535554 0.05303331\
+#2        Control - Therapeutic 2.2001092 0.02779915 0.08339745\
+#3 Subtherapeutic - Therapeutic 0.1315953 0.89530440 0.89530440\
+\
+#Overall test for day\
+kruskal.test(H ~ day, data=meta)\
+# Kruskal-Wallis chi-squared = 24.787, df = 2, p-value = 4.146e-06\
+KW_post_hoc <- dunnTest(H ~ day, data=meta, method = "bh")\
+#  Comparison         Z      P.unadj        P.adj\
+#1     35 - 7  2.978152 2.899924e-03 4.349886e-03\
+#2    35 - 78 -1.946617 5.158062e-02 5.158062e-02\
+#3     7 - 78 -4.954501 7.251612e-07 2.175484e-06\
+kruskal.test(H ~ antibiotic, data=subset(meta, day == 7))\
+#Kruskal-Wallis rank sum test\
+#data:  H by antibiotic\
+#Kruskal-Wallis chi-squared = 2.5034, df = 2, p-value = 0.286\
+KW_post_hoc_d7 <- dunnTest(H ~ antibiotic, data=subset(meta, day == 7), method = "bh")\
+\
+#                    Comparison          Z   P.unadj     P.adj\
+#1     Control - Subtherapeutic  1.4654893 0.1427875 0.4283624\
+#2        Control - Therapeutic  1.2342805 0.2170984 0.3256476\
+#3 Subtherapeutic - Therapeutic -0.2641289 0.7916806 0.7916806\
+kruskal.test(H ~ antibiotic, data=subset(meta, day == 35))\
+#	Kruskal-Wallis rank sum test\
+#data:  H by antibiotic\
+#Kruskal-Wallis chi-squared = 14.098, df = 2, p-value = 0.0008682\
+KW_post_hoc_d35 <- dunnTest(H ~ antibiotic, data=subset(meta, day == 35), method = "bh")\
+#                    Comparison        Z      P.unadj        P.adj\
+#1     Control - Subtherapeutic 2.209802 0.0271188923 0.0406783385\
+#2        Control - Therapeutic 3.733804 0.0001886095 0.0005658285\
+#3 Subtherapeutic - Therapeutic 1.524002 0.1275083305 0.1275083305\
+\
+kruskal.test(H ~ antibiotic, data=subset(meta, day == 78))\
+#	Kruskal-Wallis rank sum test\
+#data:  H by antibiotic\
+#Kruskal-Wallis chi-squared = 1.4616, df = 2, p-value = 0.4815\
+\
+###Mixed Model for observed_features\
+qp.pd.all = glm(obs_n ~ day * antibiotic, data=meta, family="quasipoisson")\
+summary(qp.pd.all)\
+# From that result, it appears the day and antibiotic is significant, but \
+# the interaction is not. So I will test the time match samples\
+\
+#Overall test for antibiotic\
+kruskal.test(obs_n ~ antibiotic, data=meta)\
+# Kruskal-Wallis chi-squared = 12.021, df = 2, p-value = 0.002453\
+KW_post_hoc <- dunnTest(obs_n ~ antibiotic, data=meta, method = "bh")\
+#                      Comparison         Z    P.unadj      P.adj\
+#1     Control - Subtherapeutic 2.7110045 0.006707973 0.010061959\
+#2        Control - Therapeutic 3.2508677 0.001150534 0.003451602\
+#3 Subtherapeutic - Therapeutic 0.5962136 0.551032510 0.551032510\
+\
+\
+#Overall test for day\
+kruskal.test(obs_n ~ day, data=meta)\
+# Kruskal-Wallis chi-squared = 39.963, df = 2, p-value = 2.099e-09\
+KW_post_hoc <- dunnTest(obs_n ~ day, data=meta, method = "bh")\
+#  Comparison         Z      P.unadj        P.adj\
+#1     35 - 7  3.052848 2.266809e-03 2.266809e-03\
+#2    35 - 78 -3.244569 1.176284e-03 1.764426e-03\
+#3     7 - 78 -6.316925 2.668186e-10 8.004559e-10\
+kruskal.test(obs_n ~ antibiotic, data=subset(meta, day == 7))\
+#Kruskal-Wallis chi-squared = 5.9834, df = 2, p-value = 0.0502\
+KW_post_hoc_d7 <- dunnTest(obs_n ~ antibiotic, data=subset(meta, day == 7), method = "bh")\
+\
+#                     Comparison          Z   P.unadj     P.adj\
+#1     Control - Subtherapeutic  2.2067542 0.02733124 0.08199371\
+#2        Control - Therapeutic  1.9958578 0.04594941 0.06892411\
+#3 Subtherapeutic - Therapeutic -0.2641289 0.79168061 0.79168061\
+kruskal.test(obs_n ~ antibiotic, data=subset(meta, day == 35))\
+#Kruskal-Wallis chi-squared = 17.221, df = 2, p-value = 0.0001822\
+KW_post_hoc_d35 <- dunnTest(obs_n ~ antibiotic, data=subset(meta, day == 35), method = "bh")\
+#                    Comparison        Z      P.unadj        P.adj\
+#1     Control - Subtherapeutic 2.921003 0.0034890656 0.0052335983\
+#2        Control - Therapeutic 4.013204 0.0000599001 0.0001797003\
+#3 Subtherapeutic - Therapeutic 1.092201 0.2747447225 0.2747447225\
+\
+kruskal.test(obs_n ~ antibiotic, data=subset(meta, day == 78))\
+#Kruskal-Wallis chi-squared = 6.0514, df = 2, p-value = 0.04853\
+KW_post_hoc_d78 <- dunnTest(obs_n ~ antibiotic, data=subset(meta, day == 78), method = "bh")\
+#                    Comparison          Z    P.unadj      P.adj\
+#1     Control - Subtherapeutic  2.3931952 0.01670235 0.05010706\
+#2        Control - Therapeutic  1.8070852 0.07074900 0.10612350\
+#3 Subtherapeutic - Therapeutic -0.4932233 0.62185481 0.62185481\
+ \
+#Mixed Model for evenness\
+qp.pd.all = glm(pielou_e ~ day * antibiotic, data=meta, family="quasipoisson")\
+summary(qp.pd.all)\
+#Nothing is significant\
+#Overall effect of antibiotic treatment\
+kruskal.test(pielou_e ~ antibiotic, data=meta)\
+#Kruskal-Wallis chi-squared = 0.2501, df = 2, p-value = 0.8825\
+\
+kruskal.test(pielou_e ~ antibiotic, data=subset(meta, day == 7))\
+#Kruskal-Wallis chi-squared = 0.21931, df = 2, p-value = 0.8961\
+KW_post_hoc_d7 <- dunnTest(pielou_e ~ antibiotic, data=subset(meta, day == 7), method = "bh")\
+# did not run it - NS\
+kruskal.test(pielou_e ~ antibiotic, data=subset(meta, day == 35))\
+#Kruskal-Wallis chi-squared = 5.4916, df = 2, p-value = 0.0642\
+KW_post_hoc_d35 <- dunnTest(pielou_e ~ antibiotic, data=subset(meta, day == 35), method = "bh")\
+#  did not run - NS\
+\
+kruskal.test(pielou_e ~ antibiotic, data=subset(meta, day == 78))\
+#Kruskal-Wallis chi-squared = 2.1726, df = 2, p-value = 0.3375\
+KW_post_hoc_d78 <- dunnTest(pielou_e ~ antibiotic, data=subset(meta, day == 78), method = "bh")\
+#   did not run - NS\
+\
+kruskal.test(pielou_e ~ antibiotic, data=meta)\
+#Kruskal-Wallis chi-squared = 0.2501, df = 2, p-value = 0.8825\
+\
+# interesting!! Less functional diversity with antibiotics.\
+}

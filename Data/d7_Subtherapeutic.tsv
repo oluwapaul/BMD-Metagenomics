@@ -1,0 +1,64 @@
+Function	mainrole	subrole	MGE	subsystem	Name	baseMean	log2FoldChange	lfcSE	stat	pvalue	padj
+type-F conjugative transfer system mating-pair stabilization protein TraN	Uncategorized	Uncategorized	conjugation	Mating Pair Stabilization	TraN_Ftype	1042.546801	2.69005913	0.678894211	3.962412825	7.42E-05	0.002318176
+P-type DNA transfer ATPase VirB11	Uncategorized	Uncategorized	conjugation	Others	VirB11	1379.038133	2.290778096	0.770371509	2.973601787	0.002943268	0.037146068
+type IV conjugative transfer system protein TraE	Uncategorized	Uncategorized	conjugation	Pilus Assembly/Extension	TraE_TIGR	283.3334062	2.685795132	0.602534383	4.457496878	8.29E-06	0.000416562
+type IV conjugative transfer system protein TraL	Cellular processes	Conjugation	conjugation	Pilus Assembly/Extension	TraL_TIGR	219.5685038	2.665147943	0.693294322	3.844179675	0.000120956	0.003405387
+type-F conjugative transfer system pilin assembly protein TraF	Uncategorized	Uncategorized	conjugation	Pilus Assembly/Extension	TraF	453.8564355	2.645541254	0.601845032	4.395718352	1.10E-05	0.000514296
+type-F conjugative transfer system pilin assembly protein TrbC	Uncategorized	Uncategorized	conjugation	Pilus Assembly/Extension	TrbC_Ftype	404.3757378	2.43422886	0.670354972	3.63125353	0.000282048	0.006682844
+type-F conjugative transfer system pilin assembly thiol-disulfide isomerase TrbB	Uncategorized	Uncategorized	conjugation	Pilus Assembly/Extension	TrbB	407.5395003	2.60876986	0.639889248	4.076908413	4.56E-05	0.001601722
+type-F conjugative transfer system protein TraW	Uncategorized	Uncategorized	conjugation	Pilus Assembly/Extension	TraW	565.2170155	2.966397697	0.714129498	4.153865238	3.27E-05	0.001222172
+type-IV secretion system protein TraC	Uncategorized	Uncategorized	conjugation	Pilus Assembly/Extension	TraC-F-type	1318.015868	2.73251822	0.634412526	4.307163096	1.65E-05	0.000718062
+type-F conjugative transfer system protein TrbI	Uncategorized	Uncategorized	conjugation	Pilus Retraction	TrbI_Ftype	255.0891408	2.623572483	0.617227014	4.250579481	2.13E-05	0.000853539
+type IV conjugative transfer system pilin TraA	Uncategorized	Uncategorized	conjugation	ProPilin Maturation	TraA_TIGR	164.1323859	2.499948962	0.66290885	3.771180553	0.000162477	0.004428937
+type-F conjugative transfer system pilin acetylase TraX	Uncategorized	Uncategorized	conjugation	ProPilin Maturation	TraX_Ftype	463.4098697	2.821809099	0.625015864	4.514779965	6.34E-06	0.000338304
+type-F conjugative transfer system pilin chaperone TraQ	Uncategorized	Uncategorized	conjugation	ProPilin Maturation	TraQ	95.93033774	2.071997237	0.719776772	2.878666439	0.003993605	0.044730667
+conjugative relaxase domain	Mobile and extrachromosomal element functions	Plasmid functions	conjugation	Relaxase	relax_trwC	539.9884111	2.552808634	0.58393141	4.371761115	1.23E-05	0.000563861
+"_conjugative coupling factor TraD, SXT/TOL subfamily_"	Mobile and extrachromosomal element functions	Other	conjugation	Relaxosome Accessory	SXT_TraD	213.1674849	2.353944213	0.775911208	3.033780396	0.002415102	0.032226512
+conjugal transfer/type IV secretion protein DotA/TraY	Uncategorized	Uncategorized	conjugation	Relaxosome Accessory	DotA_TraY	470.8897201	2.830450936	0.854589099	3.312060661	0.000926115	0.016477123
+type IV conjugative transfer system coupling protein TraD	Uncategorized	Uncategorized	conjugation	Relaxosome Accessory	TraD_Ftype	1404.279222	2.720665535	0.615262115	4.421961744	9.78E-06	0.000464048
+P-type conjugative transfer protein VirB9	Cellular processes	Conjugation	conjugation	T4SS Core Proteins	VirB9	16.31018705	4.243848158	0.816000546	5.200790829	1.98E-07	1.94E-05
+type IV conjugative transfer system protein TraV	Uncategorized	Uncategorized	conjugation	T4SS Core Proteins	TraV	402.7215295	3.122499104	0.619117829	5.043465004	4.57E-07	3.78E-05
+type-F conjugative transfer system secretin TraK	Uncategorized	Uncategorized	conjugation	T4SS Core Proteins	TraK_Ftype	366.3853983	2.404132699	0.640107579	3.755826019	0.000172771	0.004563284
+plasmid transfer ATPase TraJ	Mobile and extrachromosomal element functions	Plasmid functions	conjugation	Transcription Regulation	plasmid_TraJ	265.445829	3.005619355	0.797575482	3.76844502	0.000164268	0.004430039
+phage shock operon rhodanese PspE	Uncategorized	Uncategorized	phage	Bacterial Defence	phageshock_pspE						
+phage shock protein A	Cellular processes	Adaptations to atypical conditions	phage	Bacterial Defence	phageshock_pspA						
+phage shock protein B	Cellular processes	Adaptations to atypical conditions	phage	Bacterial Defence	phageshock_pspB						
+phage shock protein C	Cellular processes	Adaptations to atypical conditions	phage	Bacterial Defence	phageshock_pspC						
+phage shock protein G	Cellular processes	Adaptations to atypical conditions	phage	Bacterial Defence	phageshock_pspG						
+phage shock protein PspD	Cellular processes	Adaptations to atypical conditions	phage	Bacterial Defence	phageshock_pspD						
+"_phage holin, lambda family_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Bacterial Lysis	holin_lambda	33.00837321	2.737243667	0.79372282	3.448614046	0.000563471	0.011642048
+"_phage lysis regulatory protein, LysB family_"	Uncategorized	Uncategorized	phage	Bacterial Lysis	phage_LysB						
+"_phage conserved hypothetical protein, C-terminal domain_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Others	phg_TIGR02220	578.9901617	-2.576220621	0.658255361	-3.913710048	9.09E-05	0.00272488
+"_phage-associated protein, HI1409 family_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Others	phge_rel_HI1409						
+"_phage/conjugal plasmid C-4 type zinc finger protein, TraR family_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Others	C4_traR_proteo						
+"_RNA ligase, Rnl2 family_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Others	RNA_lig_RNL2	79.63965146	5.464460832	0.910640478	6.000678607	1.96E-09	2.40E-07
+"_RNA ligase, T4 RnlA family_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Others	RNA_lig_T4_1	63.32633575	6.073749894	0.923760011	6.575030117	4.86E-11	6.23E-09
+phage virion morphogenesis protein	Mobile and extrachromosomal element functions	Prophage functions	phage	Others	tail_comp_S						
+phage/plasmid-like protein TIGR03299	Mobile and extrachromosomal element functions	Other	phage	Others	LGT_TIGR03299						
+"_phage portal protein, HK97 family_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Phage DNA Packaging	portal_HK97						
+"_phage portal protein, lambda family_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Phage DNA Packaging	portal_lambda						
+"_phage portal protein, putative, A118 family_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Phage DNA Packaging	A118_put_portal						
+"_phage major capsid protein, HK97 family_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Phage Head	major_cap_HK97						
+"_phage major capsid protein, P2 family_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Phage Head	major_capsid_P2						
+"_phage prohead protease, HK97 family_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Phage Head	proheadase_HK97						
+"_phage major tail protein, phi13 family_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Phage Tail	maj_tail_phi13						
+"_phage tail tape measure protein, lambda family_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Phage Tail	tape_meas_lam_C						
+"_putative phage tail component, N-terminal domain_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Phage Tail	phi3626_gp14_N						
+phage minor tail protein L	Mobile and extrachromosomal element functions	Prophage functions	phage	Phage Tail	phage_tail_L						
+phage tail assembly protein T	Mobile and extrachromosomal element functions	Prophage functions	phage	Phage Tail	phage_lam_T						
+phage tail protein domain	Mobile and extrachromosomal element functions	Prophage functions	phage	Phage Tail	tail_TIGR02242						
+phage tail protein I	Mobile and extrachromosomal element functions	Prophage functions	phage	Phage Tail	tail_P2_I						
+"_phage minor structural protein, N-terminal region_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Prophage Replication & Expression	put_anti_recept						
+"_phage regulatory protein, Rha family_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Prophage Replication & Expression	phage_pRha						
+"_phage replisome organizer, putative, N-terminal region_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Prophage Replication & Expression	phage_rep_org_N						
+"_phage terminase, large subunit, PBSX family_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Prophage Replication & Expression	phage_term_2						
+"_phage transcriptional regulator, ArpU family_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Prophage Replication & Expression	phage_arpU						
+"_phage transcriptional regulator, RinA family_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Prophage Replication & Expression	phage_rinA						
+"_phage/plasmid replication protein, gene II/X family_"	Mobile and extrachromosomal element functions	Prophage functions	phage	Prophage Replication & Expression	rep_II_X	163.8009644	-3.303520419	1.004230639	-3.289603295	0.001003287	0.017251154
+phage nucleotide-binding protein	Mobile and extrachromosomal element functions	Prophage functions	phage	Prophage Replication & Expression	phage_P_loop						
+phage recombination protein Bet	Mobile and extrachromosomal element functions	Prophage functions	phage	Prophage Replication & Expression	bet_lambda						
+"_Bacteroides conjugation system ATPase, TraG family_"	Cellular processes	DNA transformation	transposon	Others	Bac_Flav_CT_G	107.5121403	-3.41120541	0.990499246	-3.443925297	0.000573334	0.011657793
+Bacteroides conjugative transposon TraJ protein	Cellular processes	DNA transformation	transposon	Others	Bac_Flav_CT_J	44.91825361	-3.359890124	0.975494833	-3.444293103	0.000572555	0.011657793
+Bacteroides conjugative transposon TraK protein	Cellular processes	DNA transformation	transposon	Others	Bac_Flav_CT_K						
+Bacteroides conjugative transposon TraM protein	Cellular processes	DNA transformation	transposon	Others	Bac_Flav_CT_M	69.48291643	-3.061082213	1.006200761	-3.042218144	0.002348416	0.031666541
+Bacteroides conjugative transposon TraN protein	Cellular processes	DNA transformation	transposon	Others	Bac_Flav_CT_N	42.05704402	-3.443993063	0.936738614	-3.676578515	0.000236383	0.005996174

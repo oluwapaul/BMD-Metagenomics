@@ -1,1058 +1,1050 @@
-{\rtf1\ansi\ansicpg1252\cocoartf2709
-\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
-{\colortbl;\red255\green255\blue255;}
-{\*\expandedcolortbl;;}
-\margl1440\margr1440\vieww11520\viewh8400\viewkind0
-\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+#Co-occurence ARG and MGE
 
-\f0\fs24 \cf0 #Co-occurence ARG and MGE\
-\
-setwd(dir = "~/Desktop/Tim-Lab/BMD/R_script/output/Network_analysis")\
-\
-ARG <- read.delim("rgi_count_table.txt", \
-                        sep = "\\t", \
-                        header = T, \
-                        row.names = 1)\
-\
-\
-#ARG <- read.csv2("normalized_ARG_rpkm_count_table_pseudocounts.csv", sep = ",", header = T,check.names=FALSE)\
-#row.names(ARG) <- ARG[,1]\
-#Including T4SS, ICE and IME\
-#MGE_conj <- read.delim("function_rpm_conjugation_new.txt", sep = "\\t", header = T,check.names=FALSE)\
-#Only T4SS and ICE (Conjugative transposon)\
-MGE_conj <- read.delim("function_rpm_conjugation.txt", sep = "\\t", header = T,check.names=FALSE)\
-MGE_phage <- read.delim("function_rpm_phage.csv", sep = ",", header = T,check.names=FALSE)\
-#row.names(ARG) <- ARG[,1]\
-\
-\
-rgi_gff <- read.delim("metaspades_500_scaff.prot.fasta.ns.rgi_out.txt", sep = "\\t", header = T)\
-#colnames(rgi_gff) <- c("seqid", "source", "type", "start", "stop", "score", "strand", "phase", "attributes")\
-#rgi_gff$length <- rgi_gff$stop - rgi_gff$start + 1\
-#rgi_gff2 <- rgi_gff %>%\
-#  separate(attributes, into = c("title", "gene_id", "title2","Gene_name", "title3", "Spectrum", "title4","Category", "title5","Mechanism"), sep = "[;=]") \
-rgi_gff <- separate(data = rgi_gff, col = ORF_ID, into = c("gene", "GeneMark", "length", "To", "start", "end", "Node"), remove = F)\
-rgi_gff$gene_name <- paste(rgi_gff$gene,rgi_gff$GeneMark, sep="_")\
-rgi_gff2<-dplyr::select(rgi_gff,gene_name,Best_Hit_ARO,Drug.Class,Resistance.Mechanism,AMR.Gene.Family,)\
-names(rgi_gff2) <- c("gene_name", "AMR_name", "Drug_Class", "Resistance_Mechanism", "AMR_family")\
-rgi_gff2$gene_name2 <- rgi_gff2$gene_name\
-\
-ARG <- as.data.frame(t(as.matrix(ARG)))\
-\
-#names(ARG) <- ARG[1,] \
-#ARG <- ARG[-1,]\
-\
-str(ARG)\
-str(MGE_conj)\
-#colnames(ARG) <- ARG[2,]\
-#colnames(ARG_phage) <- ARG_phage[2,]\
-#ARG <- ARG[-1:-2,]\
-#ARG <- as.numeric(unlist(ARG))\
-#ARG <- as.data.frame(ARG)\
-#ARG_phage <- ARG_phage[-1:-2,]\
-#ARG <- ARG[-which(ARG$row.name %in% c("d07sub045")), ] \
-\
-row.names(MGE_conj) <- MGE_conj[,1]\
-MGE_conj <- MGE_conj[,-1:-3]\
-row.names(MGE_phage) <- MGE_phage[,1]\
-MGE_phage <- MGE_phage[,-1:-3]\
-\
-meta <- read.csv("mg_metadata.csv")\
-meta <- meta[-which(meta$sample %in% c("d07sub045")), ] \
-\
-str(meta)\
-meta$day <- as.factor(meta$day)\
-meta$antibiotic  <- as.factor(meta$antibiotic)\
-meta$group <- factor(meta$group, levels = c("Ctrl_7", "Sub_7", "Ther_7", "Ctrl_35", "Sub_35", "Ther_35", "Ctrl_78", "Sub_78", "Ther_78"))\
-str(meta)\
-\
-row.names(meta) <- meta[,1]\
-meta <- meta[,-1]\
-\
-ARG_MGE_conj <- merge(meta,ARG, by.x = 0, by.y = 0 )\
-row.names(ARG_MGE_conj) <- ARG_MGE_conj[,1]\
-ARG_MGE_conj <- ARG_MGE_conj[,-1]\
-ARG_MGE_conj <- ARG_MGE_conj[,-2:-7]\
-ARG_MGE_conj <- merge(ARG_MGE_conj, MGE_conj, by.x = 0, by.y = 0)\
-row.names(ARG_MGE_conj) <- ARG_MGE_conj[,1]\
-ARG_MGE_conj <- ARG_MGE_conj[,-1]\
-\
-ARG_MGE_phage <- merge(meta,ARG, by.x = 0, by.y = 0)\
-row.names(ARG_MGE_phage) <- ARG_MGE_phage[,1]\
-ARG_MGE_phage <- ARG_MGE_phage[,-1]\
-ARG_MGE_phage <- ARG_MGE_phage[,-2:-7]\
-ARG_MGE_phage <- merge(ARG_MGE_phage, MGE_phage, by.x = 0, by.y = 0)\
-row.names(ARG_MGE_phage) <- ARG_MGE_phage[,1]\
-ARG_MGE_phage <- ARG_MGE_phage[,-1]\
-\
-#subset by group which is the different antibiotic treatment under each day\
-#Conjugation\
-#day 7\
-d7_ARG_MGE_conj_ctrl <- subset(ARG_MGE_conj, group=="Ctrl_7")\
-d7_ARG_MGE_conj_sub <- subset(ARG_MGE_conj, group=="Sub_7")\
-d7_ARG_MGE_conj_ther <- subset(ARG_MGE_conj, group=="Ther_7")\
-\
-#day 35\
-d35_ARG_MGE_conj_ctrl <- subset(ARG_MGE_conj, group=="Ctrl_35")\
-d35_ARG_MGE_conj_sub <- subset(ARG_MGE_conj, group=="Sub_35")\
-d35_ARG_MGE_conj_ther <- subset(ARG_MGE_conj, group=="Ther_35")\
-\
-#day 78\
-d78_ARG_MGE_conj_ctrl <- subset(ARG_MGE_conj, group=="Ctrl_78")\
-d78_ARG_MGE_conj_sub <- subset(ARG_MGE_conj, group=="Sub_78")\
-d78_ARG_MGE_conj_ther <- subset(ARG_MGE_conj, group=="Ther_78")\
-\
-#Phage\
-#day 7\
-d7_ARG_MGE_phage_ctrl <- subset(ARG_MGE_phage, group=="Ctrl_7")\
-d7_ARG_MGE_phage_sub <- subset(ARG_MGE_phage, group=="Sub_7")\
-d7_ARG_MGE_phage_ther <- subset(ARG_MGE_phage, group=="Ther_7")\
-\
-#day35\
-d35_ARG_MGE_phage_ctrl <- subset(ARG_MGE_phage, group=="Ctrl_35")\
-d35_ARG_MGE_phage_sub <- subset(ARG_MGE_phage, group=="Sub_35")\
-d35_ARG_MGE_phage_ther <- subset(ARG_MGE_phage, group=="Ther_35")\
-\
-#day 78\
-d78_ARG_MGE_phage_ctrl <- subset(ARG_MGE_phage, group=="Ctrl_78")\
-d78_ARG_MGE_phage_sub <- subset(ARG_MGE_phage, group=="Sub_78")\
-d78_ARG_MGE_phage_ther <- subset(ARG_MGE_phage, group=="Ther_78")\
-\
-\
-\
-\
-#colnames(ARG_MGE_conj)\
-#colnames(ARG_MGE_phage)\
-\
-#subset ARG_MGE_conj by day\
-#d7_ARG_MGE_conj <- subset(ARG_MGE_conj, day.x=="7")\
-#d35_ARG_MGE_conj <- subset(ARG_MGE_conj, day.x=="35")\
-#d78_ARG_MGE_conj <- subset(ARG_MGE_conj, day.x=="78")\
-\
-#subset d7_ARG_MGE_conj by trt\
-#d7_ARG_MGE_conj_ctrl <- subset(d7_ARG_MGE_conj, trt.x=="ctrl")\
-#d7_ARG_MGE_conj_sub <- subset(d7_ARG_MGE_conj, trt.x=="sub")\
-#d7_ARG_MGE_conj_ther <- subset(d7_ARG_MGE_conj, trt.x=="ther")\
-\
-#subset d35_ARG_MGE_conj by trt\
-#d35_ARG_MGE_conj_ctrl <- subset(d35_ARG_MGE_conj, trt.x=="ctrl")\
-#d35_ARG_MGE_conj_sub <- subset(d35_ARG_MGE_conj, trt.x=="sub")\
-#d35_ARG_MGE_conj_ther <- subset(d35_ARG_MGE_conj, trt.x=="ther")\
-\
-#subset d78_ARG_MGE_conj by trt\
-#d78_ARG_MGE_conj_ctrl <- subset(d78_ARG_MGE_conj, trt.x=="ctrl")\
-#d78_ARG_MGE_conj_sub <- subset(d78_ARG_MGE_conj, trt.x=="sub")\
-#d78_ARG_MGE_conj_ther <- subset(d78_ARG_MGE_conj, trt.x=="ther")\
-\
-#subset ARG_MGE_phage by day\
-#d7_ARG_MGE_phage <- subset(ARG_MGE_phage, day.x=="7")\
-#d35_ARG_MGE_phage <- subset(ARG_MGE_phage, day.x=="35")\
-#d78_ARG_MGE_phage <- subset(ARG_MGE_phage, day.x=="78")\
-\
-#subset d7_ARG_MGE_phage by trt\
-#d7_ARG_MGE_phage_ctrl <- subset(d7_ARG_MGE_phage, trt.x=="ctrl")\
-#d7_ARG_MGE_phage_sub <- subset(d7_ARG_MGE_phage, trt.x=="sub")\
-#d7_ARG_MGE_phage_ther <- subset(d7_ARG_MGE_phage, trt.x=="ther")\
-\
-#subset d35_ARG_MGE_phage by trt\
-#d35_ARG_MGE_phage_ctrl <- subset(d35_ARG_MGE_phage, trt.x=="ctrl")\
-#d35_ARG_MGE_phage_sub <- subset(d35_ARG_MGE_phage, trt.x=="sub")\
-#d35_ARG_MGE_phage_ther <- subset(d35_ARG_MGE_phage, trt.x=="ther")\
-\
-#subset d78_ARG_MGE_phage by trt\
-#d78_ARG_MGE_phage_ctrl <- subset(d78_ARG_MGE_phage, trt.x=="ctrl")\
-#d78_ARG_MGE_phage_sub <- subset(d78_ARG_MGE_phage, trt.x=="sub")\
-#d78_ARG_MGE_phage_ther <- subset(d78_ARG_MGE_phage, trt.x=="ther")\
-\
-\
-q_cutoff <- 0.05\
-\
-#for(i in 1:length(treatments))\{\
-#subset the data for a particular treatment YOU MUST ENTER THE HEADER OF THE COLUMN THAT HAS THE DIFFERENT TREATMENTS IN THIS CASE \'93Foaming_Status\'94\
-#print(paste("reading ",treatments[i],sep=""))\
-#temp<-subset(dataset, get(my_column)==treatments[i])\
-#tempn<-subset(datasetn, get(my_column)==treatments[i])\
-#print(paste("finished reading ",treatments[i],sep=""))\
-# making an object that has all the results in it (both rho and P values)\
-\
-d7_ARG_MGE_conj_ctrl <- d7_ARG_MGE_conj_ctrl[,-1]\
-str(d7_ARG_MGE_conj_ctrl)\
-\
-#str(d7_ARG_MGE_conj_sub)\
-\
-#d7_ARG_MGE_conj_ctrl <- as.numeric(d7_ARG_MGE_conj_ctrl)\
-#unlist(d7_ARG_MGE_conj_ctrl)\
-\
-#sapply(d7_ARG_MGE_conj_ctrl, is.numeric)\
-sapply(d7_ARG_MGE_conj_ctrl, as.numeric)\
-#lapply(d7_ARG_MGE_conj_ctrl, is.numeric)\
-sapply(d7_ARG_MGE_conj_sub, is.numeric)\
-sapply(d7_ARG_MGE_conj_ther, is.numeric)\
-\
-sapply(d35_ARG_MGE_conj_ctrl, is.numeric)\
-sapply(d35_ARG_MGE_conj_sub, is.numeric)\
-sapply(d35_ARG_MGE_conj_ther, is.numeric)\
-\
-sapply(d78_ARG_MGE_conj_ctrl, is.numeric)\
-sapply(d78_ARG_MGE_conj_sub, is.numeric)\
-sapply(d78_ARG_MGE_conj_ther, is.numeric)\
-\
-sapply(d7_ARG_MGE_phage_ctrl, as.numeric)\
-sapply(d7_ARG_MGE_phage_sub, as.numeric)\
-sapply(d7_ARG_MGE_phage_ther, as.numeric)\
-\
-sapply(d35_ARG_MGE_phage_ctrl, as.numeric)\
-sapply(d35_ARG_MGE_phage_sub, as.numeric)\
-sapply(d35_ARG_MGE_phage_ther, as.numeric)\
-\
-sapply(d78_ARG_MGE_phage_ctrl, as.numeric)\
-sapply(d78_ARG_MGE_phage_sub, as.numeric)\
-sapply(d78_ARG_MGE_phage_ther, as.numeric)\
-\
-\
-#co-occurence d7 conjugation control\
-#d7_ARG_MGE_conj_ctrl <- d7_ARG_MGE_conj_ctrl[,-1:-2]\
-\
-#d7_ARG_MGE_conj_ctrl[d7_ARG_MGE_conj_ctrl==0]<-NA\
-\
-#d7_ARG_MGE_conj_ctrl <-na.omit(d7_ARG_MGE_conj_ctrl)\
-is.na(d7_ARG_MGE_conj_ctrl)\
-is.nan(d7_ARG_MGE_conj_ctrl)\
-is.infinity(d7_ARG_MGE_conj_ctrl)\
-\
-results_d7_ARG_MGE_conj_ctrl <- rcorr(as.matrix(d7_ARG_MGE_conj_ctrl), type = c("spearman"))\
-\
-#library(corrplot)\
-#corrplot(results_d7_ARG_MGE_conj_ctrl)\
-\
-#make two seperate objects for p-value and correlation coefficients\
-rhos_d7_ARG_MGE_conj_ctrl <- results_d7_ARG_MGE_conj_ctrl$r\
-ps_d7_ARG_MGE_conj_ctrl <- results_d7_ARG_MGE_conj_ctrl$P\
-ns_d7_ARG_MGE_conj_ctrl <- results_d7_ARG_MGE_conj_ctrl$n\
-# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff\
-ps_melt_d7_ARG_MGE_conj_ctrl<-na.omit(melt(ps_d7_ARG_MGE_conj_ctrl))\
-#creating a qvalue based on FDR\
-ps_melt_d7_ARG_MGE_conj_ctrl$qval<-p.adjust(ps_melt_d7_ARG_MGE_conj_ctrl$value, method = "BH")\
-#making column names more relevant\
-\
-names(ps_melt_d7_ARG_MGE_conj_ctrl)[3]<-"pval"\
-# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here\
-ps_sub_d7_ARG_MGE_conj_ctrl<-subset(ps_melt_d7_ARG_MGE_conj_ctrl, qval < q_cutoff)\
-\
-# now melting the rhos, note the similarity between ps_melt and rhos_melt\
-rhos_melt_d7_ARG_MGE_conj_ctrl <- na.omit(melt(rhos_d7_ARG_MGE_conj_ctrl))\
-names(rhos_melt_d7_ARG_MGE_conj_ctrl)[3]<-"rho"\
-\
-# now melting the ns\
-ns_melt_d7_ARG_MGE_conj_ctrl <- (melt(ns_d7_ARG_MGE_conj_ctrl))\
-names(ns_melt_d7_ARG_MGE_conj_ctrl)[3]<-"n"\
-\
-#merging together and remove negative rhos\
-merged_d7_ARG_MGE_conj_ctrl<-merge(ps_sub_d7_ARG_MGE_conj_ctrl,rhos_melt_d7_ARG_MGE_conj_ctrl,by=c("Var1","Var2"))\
-merged_d7_ARG_MGE_conj_ctrl<-merge(merged_d7_ARG_MGE_conj_ctrl,ns_melt_d7_ARG_MGE_conj_ctrl,by=c("Var1","Var2"))\
-\
-merged_d7_ARG_MGE_conj_ctrl<-subset(merged_d7_ARG_MGE_conj_ctrl, rho >= 0.8)\
-\
-merged_d7_ARG_MGE_conj_ctrl2 <- left_join(merged_d7_ARG_MGE_conj_ctrl, rgi_gff2, by = c("Var1"="gene_name"))\
-merged_d7_ARG_MGE_conj_ctrl2 <- left_join(merged_d7_ARG_MGE_conj_ctrl2, rgi_gff2, by = c("Var2"="gene_name2"))\
-\
-merged_d7_ARG_MGE_conj_ctrl2$AMR_name.x <- merged_d7_ARG_MGE_conj_ctrl2$AMR_name.x %>% replace_na('MGE')\
-merged_d7_ARG_MGE_conj_ctrl2$AMR_name.y <- merged_d7_ARG_MGE_conj_ctrl2$AMR_name.y %>% replace_na('MGE')\
-merged_d7_ARG_MGE_conj_ctrl3$filter <- if(merged_d7_ARG_MGE_conj_ctrl2 %>%\
-  select(Var1, Var2, pval:AMR_family.y) %>%\
-  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE") = 1)\
-\
-#  merged_d7_ARG_MGE_conj_ctrl4 <- merged_d7_ARG_MGE_conj_ctrl2 %>%\
-#  select(Var1, Var2, pval:AMR_family.y) %>%\
-#  filter( AMR_name.x !="MGE", AMR_name.y == "MGE")\
-  \
-  \
-write.csv(merged_d7_ARG_MGE_conj_ctrl3, "r_output2/Conjugation/d7_ctrl_conj_co-occurence.csv", row.names = F)\
-\
-#co-occurence d7 conjugation subtherapeutic\
-d7_ARG_MGE_conj_sub <- d7_ARG_MGE_conj_sub[,-1]\
-\
-results_d7_ARG_MGE_conj_sub <- rcorr(as.matrix(d7_ARG_MGE_conj_sub), type = c("spearman"))\
-\
-#corrplot(results_d7_ARG_MGE_conj_ctrl)\
-\
-#make two seperate objects for p-value and correlation coefficients\
-rhos_d7_ARG_MGE_conj_sub <- results_d7_ARG_MGE_conj_sub$r\
-ps_d7_ARG_MGE_conj_sub <- results_d7_ARG_MGE_conj_sub$P\
-ns_d7_ARG_MGE_conj_sub <- results_d7_ARG_MGE_conj_sub$n\
-# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff\
-ps_melt_d7_ARG_MGE_conj_sub <- na.omit(melt(ps_d7_ARG_MGE_conj_sub))\
-#creating a qvalue based on FDR\
-ps_melt_d7_ARG_MGE_conj_sub$qval<-p.adjust(ps_melt_d7_ARG_MGE_conj_sub$value, method = "BH")\
-#making column names more relevant\
-\
-names(ps_melt_d7_ARG_MGE_conj_sub)[3]<-"pval"\
-# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here\
-ps_sub_d7_ARG_MGE_conj_sub <- subset(ps_melt_d7_ARG_MGE_conj_sub, qval < q_cutoff)\
-\
-# now melting the rhos, note the similarity between ps_melt and rhos_melt\
-rhos_melt_d7_ARG_MGE_conj_sub <- na.omit(melt(rhos_d7_ARG_MGE_conj_sub))\
-names(rhos_melt_d7_ARG_MGE_conj_sub)[3]<-"rho"\
-\
-# now melting the ns\
-ns_melt_d7_ARG_MGE_conj_sub <- (melt(ns_d7_ARG_MGE_conj_sub))\
-names(ns_melt_d7_ARG_MGE_conj_sub)[3]<-"n"\
-\
-#merging together and remove negative rhos\
-merged_d7_ARG_MGE_conj_sub<-merge(ps_sub_d7_ARG_MGE_conj_sub,rhos_melt_d7_ARG_MGE_conj_sub,by=c("Var1","Var2"))\
-merged_d7_ARG_MGE_conj_sub<-merge(merged_d7_ARG_MGE_conj_sub,ns_melt_d7_ARG_MGE_conj_sub,by=c("Var1","Var2"))\
-\
-merged_d7_ARG_MGE_conj_sub<-subset(merged_d7_ARG_MGE_conj_sub, rho >= 0.8)\
-\
-merged_d7_ARG_MGE_conj_sub2 <- left_join(merged_d7_ARG_MGE_conj_sub, rgi_gff2, by = c("Var1"="gene_name"))\
-merged_d7_ARG_MGE_conj_sub2 <- left_join(merged_d7_ARG_MGE_conj_sub2, rgi_gff2, by = c("Var2"="gene_name2"))\
-\
-merged_d7_ARG_MGE_conj_sub2$AMR_name.x <- merged_d7_ARG_MGE_conj_sub2$AMR_name.x %>% replace_na('MGE')\
-merged_d7_ARG_MGE_conj_sub2$AMR_name.y <- merged_d7_ARG_MGE_conj_sub2$AMR_name.y %>% replace_na('MGE')\
-merged_d7_ARG_MGE_conj_sub3 <- merged_d7_ARG_MGE_conj_sub2 %>%\
-                                          select(Var1, Var2, pval:AMR_family.y) %>%\
-                                          filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")\
-  \
-\
-write.csv(merged_d7_ARG_MGE_conj_sub3, "r_output2/Conjugation/d7_sub_conj_co-occurence.csv", row.names = F)\
-\
-#co-occurence d7 conjugation therapaeutic\
-d7_ARG_MGE_conj_ther <- d7_ARG_MGE_conj_ther[,-1]\
-\
-results_d7_ARG_MGE_conj_ther <- rcorr(as.matrix(d7_ARG_MGE_conj_ther), type = c("spearman"))\
-\
-#corrplot(results_d7_ARG_MGE_conj_ther)\
-\
-#make two seperate objects for p-value and correlation coefficients\
-rhos_d7_ARG_MGE_conj_ther <- results_d7_ARG_MGE_conj_ther$r\
-ps_d7_ARG_MGE_conj_ther <- results_d7_ARG_MGE_conj_ther$P\
-ns_d7_ARG_MGE_conj_ther <- results_d7_ARG_MGE_conj_ther$n\
-# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff\
-ps_melt_d7_ARG_MGE_conj_ther<-na.omit(melt(ps_d7_ARG_MGE_conj_ther))\
-#creating a qvalue based on FDR\
-ps_melt_d7_ARG_MGE_conj_ther$qval<-p.adjust(ps_melt_d7_ARG_MGE_conj_ther$value, method = "BH")\
-#making column names more relevant\
-\
-names(ps_melt_d7_ARG_MGE_conj_ther)[3]<-"pval"\
-# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here\
-ps_sub_d7_ARG_MGE_conj_ther<-subset(ps_melt_d7_ARG_MGE_conj_ther, qval < q_cutoff)\
-\
-# now melting the rhos, note the similarity between ps_melt and rhos_melt\
-rhos_melt_d7_ARG_MGE_conj_ther <- na.omit(melt(rhos_d7_ARG_MGE_conj_ther))\
-names(rhos_melt_d7_ARG_MGE_conj_ther)[3]<-"rho"\
-\
-# now melting the ns\
-ns_melt_d7_ARG_MGE_conj_ther <- (melt(ns_d7_ARG_MGE_conj_ther))\
-names(ns_melt_d7_ARG_MGE_conj_ther)[3]<-"n"\
-\
-#merging together and remove negative rhos\
-merged_d7_ARG_MGE_conj_ther<-merge(ps_sub_d7_ARG_MGE_conj_ther,rhos_melt_d7_ARG_MGE_conj_ther,by=c("Var1","Var2"))\
-merged_d7_ARG_MGE_conj_ther<-merge(merged_d7_ARG_MGE_conj_ther,ns_melt_d7_ARG_MGE_conj_ther,by=c("Var1","Var2"))\
-\
-merged_d7_ARG_MGE_conj_ther<-subset(merged_d7_ARG_MGE_conj_ther, rho >= 0.8)\
-\
-merged_d7_ARG_MGE_conj_ther2 <- left_join(merged_d7_ARG_MGE_conj_ther, rgi_gff2, by = c("Var1"="gene_name"))\
-merged_d7_ARG_MGE_conj_ther2 <- left_join(merged_d7_ARG_MGE_conj_ther2, rgi_gff2, by = c("Var2"="gene_name2"))\
-\
-merged_d7_ARG_MGE_conj_ther2$AMR_name.x <- merged_d7_ARG_MGE_conj_ther2$AMR_name.x %>% replace_na('MGE')\
-merged_d7_ARG_MGE_conj_ther2$AMR_name.y <- merged_d7_ARG_MGE_conj_ther2$AMR_name.y %>% replace_na('MGE')\
-merged_d7_ARG_MGE_conj_ther4 <- merged_d7_ARG_MGE_conj_ther2 %>%\
-  select(Var1, Var2, pval:AMR_family.y) %>%\
-  filter(AMR_name.x!= "MGE", AMR_name.y== "MGE")\
-\
-write.csv(merged_d7_ARG_MGE_conj_ther3, "r_output2/Conjugation/d7_ther_conj_co-occurence.csv", row.names = F)\
-\
-#co-occurence d35 conjugation control\
-d35_ARG_MGE_conj_ctrl <- d35_ARG_MGE_conj_ctrl[,-1]\
-\
-results_d35_ARG_MGE_conj_ctrl <- rcorr(as.matrix(d35_ARG_MGE_conj_ctrl), type = c("spearman"))\
-\
-#corrplot(results_d35_ARG_MGE_conj_ctrl)\
-\
-#make two seperate objects for p-value and correlation coefficients\
-rhos_d35_ARG_MGE_conj_ctrl <- results_d35_ARG_MGE_conj_ctrl$r\
-ps_d35_ARG_MGE_conj_ctrl <- results_d35_ARG_MGE_conj_ctrl$P\
-ns_d35_ARG_MGE_conj_ctrl <- results_d35_ARG_MGE_conj_ctrl$n\
-# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff\
-ps_melt_d35_ARG_MGE_conj_ctrl<-na.omit(melt(ps_d35_ARG_MGE_conj_ctrl))\
-#creating a qvalue based on FDR\
-ps_melt_d35_ARG_MGE_conj_ctrl$qval<-p.adjust(ps_melt_d35_ARG_MGE_conj_ctrl$value, method = "BH")\
-#making column names more relevant\
-\
-names(ps_melt_d35_ARG_MGE_conj_ctrl)[3]<-"pval"\
-# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here\
-ps_sub_d35_ARG_MGE_conj_ctrl<-subset(ps_melt_d35_ARG_MGE_conj_ctrl, qval < q_cutoff)\
-\
-# now melting the rhos, note the similarity between ps_melt and rhos_melt\
-rhos_melt_d35_ARG_MGE_conj_ctrl <- na.omit(melt(rhos_d35_ARG_MGE_conj_ctrl))\
-names(rhos_melt_d35_ARG_MGE_conj_ctrl)[3]<-"rho"\
-\
-# now melting the ns\
-ns_melt_d35_ARG_MGE_conj_ctrl <- (melt(ns_d35_ARG_MGE_conj_ctrl))\
-names(ns_melt_d35_ARG_MGE_conj_ctrl)[3]<-"n"\
-\
-#merging together and remove negative rhos\
-merged_d35_ARG_MGE_conj_ctrl<-merge(ps_sub_d35_ARG_MGE_conj_ctrl,rhos_melt_d35_ARG_MGE_conj_ctrl,by=c("Var1","Var2"))\
-merged_d35_ARG_MGE_conj_ctrl<-merge(merged_d35_ARG_MGE_conj_ctrl,ns_melt_d35_ARG_MGE_conj_ctrl,by=c("Var1","Var2"))\
-\
-merged_d35_ARG_MGE_conj_ctrl<-subset(merged_d35_ARG_MGE_conj_ctrl, rho >= 0.8)\
-\
-merged_d35_ARG_MGE_conj_ctrl2 <- left_join(merged_d35_ARG_MGE_conj_ctrl, rgi_gff2, by = c("Var1"="gene_name"))\
-merged_d35_ARG_MGE_conj_ctrl2 <- left_join(merged_d35_ARG_MGE_conj_ctrl2, rgi_gff2, by = c("Var2"="gene_name2"))\
-\
-merged_d35_ARG_MGE_conj_ctrl2$AMR_name.x <- merged_d35_ARG_MGE_conj_ctrl2$AMR_name.x %>% replace_na('MGE')\
-merged_d35_ARG_MGE_conj_ctrl2$AMR_name.y <- merged_d35_ARG_MGE_conj_ctrl2$AMR_name.y %>% replace_na('MGE')\
-merged_d35_ARG_MGE_conj_ctrl3 <- merged_d35_ARG_MGE_conj_ctrl2 %>%\
-  select(Var1, Var2, pval:AMR_family.y) %>%\
-  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")\
-\
-\
-write.csv(merged_d35_ARG_MGE_conj_ctrl3, "r_output2/Conjugation/d35_ctrl_conj_co-occurence.csv", row.names = F)\
-\
-#co-occurence d35 conjugation subtherapeautic\
-d35_ARG_MGE_conj_sub <- d35_ARG_MGE_conj_sub[,-1]\
-\
-results_d35_ARG_MGE_conj_sub <- rcorr(as.matrix(d35_ARG_MGE_conj_sub), type = c("spearman"))\
-\
-#corrplot(results_d7_ARG_MGE_conj_ctrl)\
-\
-#make two seperate objects for p-value and correlation coefficients\
-rhos_d35_ARG_MGE_conj_sub <- results_d35_ARG_MGE_conj_sub$r\
-ps_d35_ARG_MGE_conj_sub <- results_d35_ARG_MGE_conj_sub$P\
-ns_d35_ARG_MGE_conj_sub <- results_d35_ARG_MGE_conj_sub$n\
-# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff\
-ps_melt_d35_ARG_MGE_conj_sub<-na.omit(melt(ps_d35_ARG_MGE_conj_sub))\
-#creating a qvalue based on FDR\
-ps_melt_d35_ARG_MGE_conj_sub$qval<-p.adjust(ps_melt_d35_ARG_MGE_conj_sub$value, method = "BH")\
-#making column names more relevant\
-\
-names(ps_melt_d35_ARG_MGE_conj_sub)[3]<-"pval"\
-# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here\
-ps_sub_d35_ARG_MGE_conj_sub<-subset(ps_melt_d35_ARG_MGE_conj_sub, qval < q_cutoff)\
-\
-# now melting the rhos, note the similarity between ps_melt and rhos_melt\
-rhos_melt_d35_ARG_MGE_conj_sub <- na.omit(melt(rhos_d35_ARG_MGE_conj_sub))\
-names(rhos_melt_d35_ARG_MGE_conj_sub)[3]<-"rho"\
-\
-# now melting the ns\
-ns_melt_d35_ARG_MGE_conj_sub <- (melt(ns_d35_ARG_MGE_conj_sub))\
-names(ns_melt_d35_ARG_MGE_conj_sub)[3]<-"n"\
-\
-#merging together and remove negative rhos\
-merged_d35_ARG_MGE_conj_sub<-merge(ps_sub_d35_ARG_MGE_conj_sub,rhos_melt_d35_ARG_MGE_conj_sub,by=c("Var1","Var2"))\
-merged_d35_ARG_MGE_conj_sub<-merge(merged_d35_ARG_MGE_conj_sub,ns_melt_d35_ARG_MGE_conj_sub,by=c("Var1","Var2"))\
-\
-merged_d35_ARG_MGE_conj_sub<-subset(merged_d35_ARG_MGE_conj_sub, rho >= 0.8)\
-\
-merged_d35_ARG_MGE_conj_sub2 <- left_join(merged_d35_ARG_MGE_conj_sub, rgi_gff2, by = c("Var1"="gene_name"))\
-merged_d35_ARG_MGE_conj_sub2 <- left_join(merged_d35_ARG_MGE_conj_sub2, rgi_gff2, by = c("Var2"="gene_name2"))\
-\
-merged_d35_ARG_MGE_conj_sub2$AMR_name.x <- merged_d35_ARG_MGE_conj_sub2$AMR_name.x %>% replace_na('MGE')\
-merged_d35_ARG_MGE_conj_sub2$AMR_name.y <- merged_d35_ARG_MGE_conj_sub2$AMR_name.y %>% replace_na('MGE')\
-merged_d35_ARG_MGE_conj_sub3 <- merged_d35_ARG_MGE_conj_sub2 %>%\
-  select(Var1, Var2, pval:AMR_family.y) %>%\
-  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")\
-\
-write.csv(merged_d35_ARG_MGE_conj_sub3, "r_output2/Conjugation/d35_sub_conj_co-occurence.csv", row.names = F)\
-\
-#co-occurrence d35 conjugation therapeutic\
-d35_ARG_MGE_conj_ther <- d35_ARG_MGE_conj_ther[,-1]\
-\
-results_d35_ARG_MGE_conj_ther <- rcorr(as.matrix(d35_ARG_MGE_conj_ther), type = c("spearman"))\
-\
-#corrplot(results_d35_ARG_MGE_conj_ther)\
-\
-#make two seperate objects for p-value and correlation coefficients\
-rhos_d35_ARG_MGE_conj_ther <- results_d35_ARG_MGE_conj_ther$r\
-ps_d35_ARG_MGE_conj_ther <- results_d35_ARG_MGE_conj_ther$P\
-ns_d35_ARG_MGE_conj_ther <- results_d35_ARG_MGE_conj_ther$n\
-# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff\
-ps_melt_d35_ARG_MGE_conj_ther<-na.omit(melt(ps_d35_ARG_MGE_conj_ther))\
-#creating a qvalue based on FDR\
-ps_melt_d35_ARG_MGE_conj_ther$qval<-p.adjust(ps_melt_d35_ARG_MGE_conj_ther$value, method = "BH")\
-#making column names more relevant\
-\
-names(ps_melt_d35_ARG_MGE_conj_ther)[3]<-"pval"\
-# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here\
-ps_sub_d35_ARG_MGE_conj_ther<-subset(ps_melt_d35_ARG_MGE_conj_ther, qval < q_cutoff)\
-\
-# now melting the rhos, note the similarity between ps_melt and rhos_melt\
-rhos_melt_d35_ARG_MGE_conj_ther <- na.omit(melt(rhos_d35_ARG_MGE_conj_ther))\
-names(rhos_melt_d35_ARG_MGE_conj_ther)[3]<-"rho"\
-\
-# now melting the ns\
-ns_melt_d35_ARG_MGE_conj_ther <- (melt(ns_d35_ARG_MGE_conj_ther))\
-names(ns_melt_d35_ARG_MGE_conj_ther)[3]<-"n"\
-\
-#merging together and remove negative rhos\
-merged_d35_ARG_MGE_conj_ther<-merge(ps_sub_d35_ARG_MGE_conj_ther,rhos_melt_d35_ARG_MGE_conj_ther,by=c("Var1","Var2"))\
-merged_d35_ARG_MGE_conj_ther<-merge(merged_d35_ARG_MGE_conj_ther,ns_melt_d35_ARG_MGE_conj_ther,by=c("Var1","Var2"))\
-\
-merged_d35_ARG_MGE_conj_ther<-subset(merged_d35_ARG_MGE_conj_ther, rho >= 0.8)\
-\
-merged_d35_ARG_MGE_conj_ther2 <- left_join(merged_d35_ARG_MGE_conj_ther, rgi_gff2, by = c("Var1"="gene_name"))\
-merged_d35_ARG_MGE_conj_ther2 <- left_join(merged_d35_ARG_MGE_conj_ther2, rgi_gff2, by = c("Var2"="gene_name2"))\
-\
-merged_d35_ARG_MGE_conj_ther2$AMR_name.x <- merged_d35_ARG_MGE_conj_ther2$AMR_name.x %>% replace_na('MGE')\
-merged_d35_ARG_MGE_conj_ther2$AMR_name.y <- merged_d35_ARG_MGE_conj_ther2$AMR_name.y %>% replace_na('MGE')\
-merged_d35_ARG_MGE_conj_ther3 <- merged_d35_ARG_MGE_conj_ther2 %>%\
-  select(Var1, Var2, pval:AMR_family.y) %>%\
-  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")\
-\
-write.csv(merged_d35_ARG_MGE_conj_ther3, "r_output2/Conjugation/d35_ther_conj_co-occurence.csv", row.names = F)\
-\
-#co-occurence d78 conjugation control\
-d78_ARG_MGE_conj_ctrl <- d78_ARG_MGE_conj_ctrl[,-1]\
-\
-results_d78_ARG_MGE_conj_ctrl <- rcorr(as.matrix(d78_ARG_MGE_conj_ctrl), type = c("spearman"))\
-\
-#corrplot(results_d78_ARG_MGE_conj_ctrl)\
-\
-#make two seperate objects for p-value and correlation coefficients\
-rhos_d78_ARG_MGE_conj_ctrl <- results_d78_ARG_MGE_conj_ctrl$r\
-ps_d78_ARG_MGE_conj_ctrl <- results_d78_ARG_MGE_conj_ctrl$P\
-ns_d78_ARG_MGE_conj_ctrl <- results_d78_ARG_MGE_conj_ctrl$n\
-# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff\
-ps_melt_d78_ARG_MGE_conj_ctrl<-na.omit(melt(ps_d78_ARG_MGE_conj_ctrl))\
-#creating a qvalue based on FDR\
-ps_melt_d78_ARG_MGE_conj_ctrl$qval<-p.adjust(ps_melt_d78_ARG_MGE_conj_ctrl$value, method = "BH")\
-#making column names more relevant\
-\
-names(ps_melt_d78_ARG_MGE_conj_ctrl)[3]<-"pval"\
-# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here\
-ps_sub_d78_ARG_MGE_conj_ctrl<-subset(ps_melt_d78_ARG_MGE_conj_ctrl, qval < q_cutoff)\
-\
-# now melting the rhos, note the similarity between ps_melt and rhos_melt\
-rhos_melt_d78_ARG_MGE_conj_ctrl <- na.omit(melt(rhos_d78_ARG_MGE_conj_ctrl))\
-names(rhos_melt_d78_ARG_MGE_conj_ctrl)[3]<-"rho"\
-\
-# now melting the ns\
-ns_melt_d78_ARG_MGE_conj_ctrl <- (melt(ns_d78_ARG_MGE_conj_ctrl))\
-names(ns_melt_d78_ARG_MGE_conj_ctrl)[3]<-"n"\
-\
-#merging together and remove negative rhos\
-merged_d78_ARG_MGE_conj_ctrl<-merge(ps_sub_d78_ARG_MGE_conj_ctrl,rhos_melt_d78_ARG_MGE_conj_ctrl,by=c("Var1","Var2"))\
-merged_d78_ARG_MGE_conj_ctrl<-merge(merged_d78_ARG_MGE_conj_ctrl,ns_melt_d78_ARG_MGE_conj_ctrl,by=c("Var1","Var2"))\
-\
-merged_d78_ARG_MGE_conj_ctrl<-subset(merged_d78_ARG_MGE_conj_ctrl, rho >= 0.8)\
-\
-merged_d78_ARG_MGE_conj_ctrl2 <- left_join(merged_d78_ARG_MGE_conj_ctrl, rgi_gff2, by = c("Var1"="gene_name"))\
-merged_d78_ARG_MGE_conj_ctrl2 <- left_join(merged_d78_ARG_MGE_conj_ctrl2, rgi_gff2, by = c("Var2"="gene_name2"))\
-\
-merged_d78_ARG_MGE_conj_ctrl2$AMR_name.x <- merged_d78_ARG_MGE_conj_ctrl2$AMR_name.x %>% replace_na('MGE')\
-merged_d78_ARG_MGE_conj_ctrl2$AMR_name.y <- merged_d78_ARG_MGE_conj_ctrl2$AMR_name.y %>% replace_na('MGE')\
-merged_d78_ARG_MGE_conj_ctrl3 <- merged_d78_ARG_MGE_conj_ctrl2 %>%\
-  select(Var1, Var2, pval:AMR_family.y) %>%\
-  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")\
-\
-write.csv(merged_d78_ARG_MGE_conj_ctrl3, "r_output2/Conjugation/d78_ctrl_conj_co-occurence.csv", row.names = F)\
-\
-#co-occurence d78 conjugation subtherapeutic\
-d78_ARG_MGE_conj_sub <- d78_ARG_MGE_conj_sub[,-1]\
-\
-results_d78_ARG_MGE_conj_sub <- rcorr(as.matrix(d78_ARG_MGE_conj_sub), type = c("spearman"))\
-\
-#corrplot(results_d78_ARG_MGE_conj_sub)\
-\
-#make two seperate objects for p-value and correlation coefficients\
-rhos_d78_ARG_MGE_conj_sub <- results_d78_ARG_MGE_conj_sub$r\
-ps_d78_ARG_MGE_conj_sub <- results_d78_ARG_MGE_conj_sub$P\
-ns_d78_ARG_MGE_conj_sub <- results_d78_ARG_MGE_conj_sub$n\
-# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff\
-ps_melt_d78_ARG_MGE_conj_sub<-na.omit(melt(ps_d78_ARG_MGE_conj_sub))\
-#creating a qvalue based on FDR\
-ps_melt_d78_ARG_MGE_conj_sub$qval<-p.adjust(ps_melt_d78_ARG_MGE_conj_sub$value, method = "BH")\
-#making column names more relevant\
-\
-names(ps_melt_d78_ARG_MGE_conj_sub)[3]<-"pval"\
-# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here\
-ps_sub_d78_ARG_MGE_conj_sub<-subset(ps_melt_d78_ARG_MGE_conj_sub, qval < q_cutoff)\
-\
-# now melting the rhos, note the similarity between ps_melt and rhos_melt\
-rhos_melt_d78_ARG_MGE_conj_sub <- na.omit(melt(rhos_d78_ARG_MGE_conj_sub))\
-names(rhos_melt_d78_ARG_MGE_conj_sub)[3]<-"rho"\
-\
-# now melting the ns\
-ns_melt_d78_ARG_MGE_conj_sub <- (melt(ns_d78_ARG_MGE_conj_sub))\
-names(ns_melt_d78_ARG_MGE_conj_sub)[3]<-"n"\
-\
-#merging together and remove negative rhos\
-merged_d78_ARG_MGE_conj_sub<-merge(ps_sub_d78_ARG_MGE_conj_sub,rhos_melt_d78_ARG_MGE_conj_sub,by=c("Var1","Var2"))\
-merged_d78_ARG_MGE_conj_sub<-merge(merged_d78_ARG_MGE_conj_sub,ns_melt_d78_ARG_MGE_conj_sub,by=c("Var1","Var2"))\
-\
-merged_d78_ARG_MGE_conj_sub<-subset(merged_d78_ARG_MGE_conj_sub, rho >= 0.8)\
-\
-merged_d78_ARG_MGE_conj_sub2 <- left_join(merged_d78_ARG_MGE_conj_sub, rgi_gff2, by = c("Var1"="gene_name"))\
-merged_d78_ARG_MGE_conj_sub2 <- left_join(merged_d78_ARG_MGE_conj_sub2, rgi_gff2, by = c("Var2"="gene_name2"))\
-\
-merged_d78_ARG_MGE_conj_sub2$AMR_name.x <- merged_d78_ARG_MGE_conj_sub2$AMR_name.x %>% replace_na('MGE')\
-merged_d78_ARG_MGE_conj_sub2$AMR_name.y <- merged_d78_ARG_MGE_conj_sub2$AMR_name.y %>% replace_na('MGE')\
-merged_d78_ARG_MGE_conj_sub3 <- merged_d78_ARG_MGE_conj_sub2 %>%\
-  select(Var1, Var2, pval:AMR_family.y) %>%\
-  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")\
-\
-write.csv(merged_d78_ARG_MGE_conj_sub3, "r_output2/Conjugation/d78_sub_conj_co-occurence.csv", row.names = F)\
-\
-#co-occurence d78 conjugation therapeutic\
-d78_ARG_MGE_conj_ther <- d78_ARG_MGE_conj_ther[,-1]\
-\
-results_d78_ARG_MGE_conj_ther <- rcorr(as.matrix(d78_ARG_MGE_conj_ther), type = c("spearman"))\
-\
-#corrplot(results_d78_ARG_MGE_conj_ther)\
-\
-#make two seperate objects for p-value and correlation coefficients\
-rhos_d78_ARG_MGE_conj_ther <- results_d78_ARG_MGE_conj_ther$r\
-ps_d78_ARG_MGE_conj_ther <- results_d78_ARG_MGE_conj_ther$P\
-ns_d78_ARG_MGE_conj_ther <- results_d78_ARG_MGE_conj_ther$n\
-# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff\
-ps_melt_d78_ARG_MGE_conj_ther<-na.omit(melt(ps_d78_ARG_MGE_conj_ther))\
-#creating a qvalue based on FDR\
-ps_melt_d78_ARG_MGE_conj_ther$qval<-p.adjust(ps_melt_d78_ARG_MGE_conj_ther$value, method = "BH")\
-#making column names more relevant\
-\
-names(ps_melt_d78_ARG_MGE_conj_ther)[3]<-"pval"\
-# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here\
-ps_sub_d78_ARG_MGE_conj_ther<-subset(ps_melt_d78_ARG_MGE_conj_ther, qval < q_cutoff)\
-\
-# now melting the rhos, note the similarity between ps_melt and rhos_melt\
-rhos_melt_d78_ARG_MGE_conj_ther <- na.omit(melt(rhos_d78_ARG_MGE_conj_ther))\
-names(rhos_melt_d78_ARG_MGE_conj_ther)[3]<-"rho"\
-\
-# now melting the ns\
-ns_melt_d78_ARG_MGE_conj_ther <- (melt(ns_d78_ARG_MGE_conj_ther))\
-names(ns_melt_d78_ARG_MGE_conj_ther)[3]<-"n"\
-\
-#merging together and remove negative rhos\
-merged_d78_ARG_MGE_conj_ther<-merge(ps_sub_d78_ARG_MGE_conj_ther,rhos_melt_d78_ARG_MGE_conj_ther,by=c("Var1","Var2"))\
-merged_d78_ARG_MGE_conj_ther<-merge(merged_d78_ARG_MGE_conj_ther,ns_melt_d78_ARG_MGE_conj_ther,by=c("Var1","Var2"))\
-\
-merged_d78_ARG_MGE_conj_ther<-subset(merged_d78_ARG_MGE_conj_ther, rho >= 0.8)\
-\
-merged_d78_ARG_MGE_conj_ther2 <- left_join(merged_d78_ARG_MGE_conj_ther, rgi_gff2, by = c("Var1"="gene_name"))\
-merged_d78_ARG_MGE_conj_ther2 <- left_join(merged_d78_ARG_MGE_conj_ther2, rgi_gff2, by = c("Var2"="gene_name2"))\
-\
-merged_d78_ARG_MGE_conj_ther2$AMR_name.x <- merged_d78_ARG_MGE_conj_ther2$AMR_name.x %>% replace_na('MGE')\
-merged_d78_ARG_MGE_conj_ther2$AMR_name.y <- merged_d78_ARG_MGE_conj_ther2$AMR_name.y %>% replace_na('MGE')\
-merged_d78_ARG_MGE_conj_ther3 <- merged_d78_ARG_MGE_conj_ther2 %>%\
-  select(Var1, Var2, pval:AMR_family.y) %>%\
-  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")\
-\
-write.csv(merged_d78_ARG_MGE_conj_ther3, "r_output2/Conjugation/d78_ther_conj_co-occurence.csv", row.names = F)\
-\
-##########\
-#########\
-#########\
-\
-#co-occurence d7 phage control\
-d7_ARG_MGE_phage_ctrl <- d7_ARG_MGE_phage_ctrl[,-1]\
-\
-results_d7_ARG_MGE_phage_ctrl <- rcorr(as.matrix(d7_ARG_MGE_phage_ctrl), type = c("spearman"))\
-\
-#corrplot(results_d7_ARG_MGE_conj_ctrl)\
-\
-#make two seperate objects for p-value and correlation coefficients\
-rhos_d7_ARG_MGE_phage_ctrl <- results_d7_ARG_MGE_phage_ctrl$r\
-ps_d7_ARG_MGE_phage_ctrl <- results_d7_ARG_MGE_phage_ctrl$P\
-ns_d7_ARG_MGE_phage_ctrl <- results_d7_ARG_MGE_phage_ctrl$n\
-# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff\
-ps_melt_d7_ARG_MGE_phage_ctrl<-na.omit(melt(ps_d7_ARG_MGE_phage_ctrl))\
-#creating a qvalue based on FDR\
-ps_melt_d7_ARG_MGE_phage_ctrl$qval<-p.adjust(ps_melt_d7_ARG_MGE_phage_ctrl$value, method = "BH")\
-#making column names more relevant\
-\
-names(ps_melt_d7_ARG_MGE_phage_ctrl)[3]<-"pval"\
-# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here\
-ps_sub_d7_ARG_MGE_phage_ctrl<-subset(ps_melt_d7_ARG_MGE_phage_ctrl, qval < q_cutoff)\
-\
-# now melting the rhos, note the similarity between ps_melt and rhos_melt\
-rhos_melt_d7_ARG_MGE_phage_ctrl <- na.omit(melt(rhos_d7_ARG_MGE_phage_ctrl))\
-names(rhos_melt_d7_ARG_MGE_phage_ctrl)[3]<-"rho"\
-\
-# now melting the ns\
-ns_melt_d7_ARG_MGE_phage_ctrl <- (melt(ns_d7_ARG_MGE_phage_ctrl))\
-names(ns_melt_d7_ARG_MGE_phage_ctrl)[3]<-"n"\
-\
-#merging together and remove negative rhos\
-merged_d7_ARG_MGE_phage_ctrl<-merge(ps_sub_d7_ARG_MGE_phage_ctrl,rhos_melt_d7_ARG_MGE_phage_ctrl,by=c("Var1","Var2"))\
-merged_d7_ARG_MGE_phage_ctrl<-merge(merged_d7_ARG_MGE_phage_ctrl,ns_melt_d7_ARG_MGE_phage_ctrl,by=c("Var1","Var2"))\
-\
-merged_d7_ARG_MGE_phage_ctrl<-subset(merged_d7_ARG_MGE_phage_ctrl, rho >= 0.8)\
-\
-merged_d7_ARG_MGE_phage_ctrl2 <- left_join(merged_d7_ARG_MGE_phage_ctrl, rgi_gff2, by = c("Var1"="gene_name"))\
-merged_d7_ARG_MGE_phage_ctrl2 <- left_join(merged_d7_ARG_MGE_phage_ctrl2, rgi_gff2, by = c("Var2"="gene_name2"))\
-\
-merged_d7_ARG_MGE_phage_ctrl2$AMR_name.x <- merged_d7_ARG_MGE_phage_ctrl2$AMR_name.x %>% replace_na('MGE')\
-merged_d7_ARG_MGE_phage_ctrl2$AMR_name.y <- merged_d7_ARG_MGE_phage_ctrl2$AMR_name.y %>% replace_na('MGE')\
-merged_d7_ARG_MGE_phage_ctrl3 <- merged_d7_ARG_MGE_phage_ctrl2 %>%\
-  select(Var1, Var2, pval:AMR_family.y) %>%\
-  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")\
-\
-write.csv(merged_d7_ARG_MGE_phage_ctrl3, "r_output2/Phage/d7_ctrl_phage_co-occurence.csv", row.names = F)\
-\
-#co-occurence d7 phage subtherapeutic\
-d7_ARG_MGE_phage_sub <- d7_ARG_MGE_phage_sub[,-1]\
-\
-results_d7_ARG_MGE_phage_sub <- rcorr(as.matrix(d7_ARG_MGE_phage_sub), type = c("spearman"))\
-\
-#corrplot(results_d7_ARG_MGE_conj_ctrl)\
-\
-#make two seperate objects for p-value and correlation coefficients\
-rhos_d7_ARG_MGE_phage_sub <- results_d7_ARG_MGE_phage_sub$r\
-ps_d7_ARG_MGE_phage_sub <- results_d7_ARG_MGE_phage_sub$P\
-ns_d7_ARG_MGE_phage_sub <- results_d7_ARG_MGE_phage_sub$n\
-# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff\
-ps_melt_d7_ARG_MGE_phage_sub <- na.omit(melt(ps_d7_ARG_MGE_phage_sub))\
-#creating a qvalue based on FDR\
-ps_melt_d7_ARG_MGE_phage_sub$qval<-p.adjust(ps_melt_d7_ARG_MGE_phage_sub$value, method = "BH")\
-#making column names more relevant\
-\
-names(ps_melt_d7_ARG_MGE_phage_sub)[3]<-"pval"\
-# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here\
-ps_sub_d7_ARG_MGE_phage_sub <- subset(ps_melt_d7_ARG_MGE_phage_sub, qval < q_cutoff)\
-\
-# now melting the rhos, note the similarity between ps_melt and rhos_melt\
-rhos_melt_d7_ARG_MGE_phage_sub <- na.omit(melt(rhos_d7_ARG_MGE_phage_sub))\
-names(rhos_melt_d7_ARG_MGE_phage_sub)[3]<-"rho"\
-\
-# now melting the ns\
-ns_melt_d7_ARG_MGE_phage_sub <- (melt(ns_d7_ARG_MGE_phage_sub))\
-names(ns_melt_d7_ARG_MGE_phage_sub)[3]<-"n"\
-\
-#merging together and remove negative rhos\
-merged_d7_ARG_MGE_phage_sub<-merge(ps_sub_d7_ARG_MGE_phage_sub,rhos_melt_d7_ARG_MGE_phage_sub,by=c("Var1","Var2"))\
-merged_d7_ARG_MGE_phage_sub<-merge(merged_d7_ARG_MGE_phage_sub,ns_melt_d7_ARG_MGE_phage_sub,by=c("Var1","Var2"))\
-\
-merged_d7_ARG_MGE_phage_sub<-subset(merged_d7_ARG_MGE_phage_sub, rho >= 0.8)\
-\
-merged_d7_ARG_MGE_phage_sub2 <- left_join(merged_d7_ARG_MGE_phage_sub, rgi_gff2, by = c("Var1"="gene_name"))\
-merged_d7_ARG_MGE_phage_sub2 <- left_join(merged_d7_ARG_MGE_phage_sub2, rgi_gff2, by = c("Var2"="gene_name2"))\
-\
-merged_d7_ARG_MGE_phage_sub2$AMR_name.x <- merged_d7_ARG_MGE_phage_sub2$AMR_name.x %>% replace_na('MGE')\
-merged_d7_ARG_MGE_phage_sub2$AMR_name.y <- merged_d7_ARG_MGE_phage_sub2$AMR_name.y %>% replace_na('MGE')\
-merged_d7_ARG_MGE_phage_sub3 <- merged_d7_ARG_MGE_phage_sub2 %>%\
-  select(Var1, Var2, pval:AMR_family.y) %>%\
-  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")\
-\
-write.csv(merged_d7_ARG_MGE_phage_sub3, "r_output2/Phage/d7_sub_phage_co-occurence.csv", row.names = F)\
-\
-#co-occurrence d7 phage therapaeutic\
-d7_ARG_MGE_phage_ther <- d7_ARG_MGE_phage_ther[,-1]\
-\
-results_d7_ARG_MGE_phage_ther <- rcorr(as.matrix(d7_ARG_MGE_phage_ther), type = c("spearman"))\
-\
-#corrplot(results_d7_ARG_MGE_conj_ther)\
-\
-#make two seperate objects for p-value and correlation coefficients\
-rhos_d7_ARG_MGE_phage_ther <- results_d7_ARG_MGE_phage_ther$r\
-ps_d7_ARG_MGE_phage_ther <- results_d7_ARG_MGE_phage_ther$P\
-ns_d7_ARG_MGE_phage_ther <- results_d7_ARG_MGE_phage_ther$n\
-# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff\
-ps_melt_d7_ARG_MGE_phage_ther<-na.omit(melt(ps_d7_ARG_MGE_phage_ther))\
-#creating a qvalue based on FDR\
-ps_melt_d7_ARG_MGE_phage_ther$qval<-p.adjust(ps_melt_d7_ARG_MGE_phage_ther$value, method = "BH")\
-#making column names more relevant\
-\
-names(ps_melt_d7_ARG_MGE_phage_ther)[3]<-"pval"\
-# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here\
-ps_sub_d7_ARG_MGE_phage_ther<-subset(ps_melt_d7_ARG_MGE_phage_ther, qval < q_cutoff)\
-\
-# now melting the rhos, note the similarity between ps_melt and rhos_melt\
-rhos_melt_d7_ARG_MGE_phage_ther <- na.omit(melt(rhos_d7_ARG_MGE_phage_ther))\
-names(rhos_melt_d7_ARG_MGE_phage_ther)[3]<-"rho"\
-\
-# now melting the ns\
-ns_melt_d7_ARG_MGE_phage_ther <- (melt(ns_d7_ARG_MGE_phage_ther))\
-names(ns_melt_d7_ARG_MGE_phage_ther)[3]<-"n"\
-\
-#merging together and remove negative rhos\
-merged_d7_ARG_MGE_phage_ther<-merge(ps_sub_d7_ARG_MGE_phage_ther,rhos_melt_d7_ARG_MGE_phage_ther,by=c("Var1","Var2"))\
-merged_d7_ARG_MGE_phage_ther<-merge(merged_d7_ARG_MGE_phage_ther,ns_melt_d7_ARG_MGE_phage_ther,by=c("Var1","Var2"))\
-\
-merged_d7_ARG_MGE_phage_ther<-subset(merged_d7_ARG_MGE_phage_ther, rho >= 0.8)\
-\
-merged_d7_ARG_MGE_phage_ther2 <- left_join(merged_d7_ARG_MGE_phage_ther, rgi_gff2, by = c("Var1"="gene_name"))\
-merged_d7_ARG_MGE_phage_ther2 <- left_join(merged_d7_ARG_MGE_phage_ther2, rgi_gff2, by = c("Var2"="gene_name2"))\
-\
-merged_d7_ARG_MGE_phage_ther2$AMR_name.x <- merged_d7_ARG_MGE_phage_ther2$AMR_name.x %>% replace_na('MGE')\
-merged_d7_ARG_MGE_phage_ther2$AMR_name.y <- merged_d7_ARG_MGE_phage_ther2$AMR_name.y %>% replace_na('MGE')\
-merged_d7_ARG_MGE_phage_ther3 <- merged_d7_ARG_MGE_phage_ther2 %>%\
-  select(Var1, Var2, pval:AMR_family.y) %>%\
-  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")\
-\
-write.csv(merged_d7_ARG_MGE_phage_ther3, "r_output2/Phage/d7_ther_phage_co-occurence.csv", row.names = F)\
-\
-#co-occurrence d35 conjugation control\
-d35_ARG_MGE_phage_ctrl <- d35_ARG_MGE_phage_ctrl[,-1]\
-\
-results_d35_ARG_MGE_phage_ctrl <- rcorr(as.matrix(d35_ARG_MGE_phage_ctrl), type = c("spearman"))\
-\
-#corrplot(results_d35_ARG_MGE_phage_ctrl)\
-\
-#make two separate objects for p-value and correlation coefficients\
-rhos_d35_ARG_MGE_phage_ctrl <- results_d35_ARG_MGE_phage_ctrl$r\
-ps_d35_ARG_MGE_phage_ctrl <- results_d35_ARG_MGE_phage_ctrl$P\
-ns_d35_ARG_MGE_phage_ctrl <- results_d35_ARG_MGE_phage_ctrl$n\
-# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff\
-ps_melt_d35_ARG_MGE_phage_ctrl<-na.omit(melt(ps_d35_ARG_MGE_phage_ctrl))\
-#creating a qvalue based on FDR\
-ps_melt_d35_ARG_MGE_phage_ctrl$qval<-p.adjust(ps_melt_d35_ARG_MGE_phage_ctrl$value, method = "BH")\
-#making column names more relevant\
-\
-names(ps_melt_d35_ARG_MGE_phage_ctrl)[3]<-"pval"\
-# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here\
-ps_sub_d35_ARG_MGE_phage_ctrl<-subset(ps_melt_d35_ARG_MGE_phage_ctrl, qval < q_cutoff)\
-\
-# now melting the rhos, note the similarity between ps_melt and rhos_melt\
-rhos_melt_d35_ARG_MGE_phage_ctrl <- na.omit(melt(rhos_d35_ARG_MGE_phage_ctrl))\
-names(rhos_melt_d35_ARG_MGE_phage_ctrl)[3]<-"rho"\
-\
-# now melting the ns\
-ns_melt_d35_ARG_MGE_phage_ctrl <- (melt(ns_d35_ARG_MGE_phage_ctrl))\
-names(ns_melt_d35_ARG_MGE_phage_ctrl)[3]<-"n"\
-\
-#merging together and remove negative rhos\
-merged_d35_ARG_MGE_phage_ctrl<-merge(ps_sub_d35_ARG_MGE_phage_ctrl,rhos_melt_d35_ARG_MGE_phage_ctrl,by=c("Var1","Var2"))\
-merged_d35_ARG_MGE_phage_ctrl<-merge(merged_d35_ARG_MGE_phage_ctrl,ns_melt_d35_ARG_MGE_phage_ctrl,by=c("Var1","Var2"))\
-\
-merged_d35_ARG_MGE_phage_ctrl<-subset(merged_d35_ARG_MGE_phage_ctrl, rho >= 0.8)\
-\
-merged_d35_ARG_MGE_phage_ctrl2 <- left_join(merged_d35_ARG_MGE_phage_ctrl, rgi_gff2, by = c("Var1"="gene_name"))\
-merged_d35_ARG_MGE_phage_ctrl2 <- left_join(merged_d35_ARG_MGE_phage_ctrl2, rgi_gff2, by = c("Var2"="gene_name2"))\
-\
-merged_d35_ARG_MGE_phage_ctrl2$AMR_name.x <- merged_d35_ARG_MGE_phage_ctrl2$AMR_name.x %>% replace_na('MGE')\
-merged_d35_ARG_MGE_phage_ctrl2$AMR_name.y <- merged_d35_ARG_MGE_phage_ctrl2$AMR_name.y %>% replace_na('MGE')\
-merged_d35_ARG_MGE_phage_ctrl3 <- merged_d35_ARG_MGE_phage_ctrl2 %>%\
-  select(Var1, Var2, pval:AMR_family.y) %>%\
-  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")\
-\
-write.csv(merged_d35_ARG_MGE_phage_ctrl3, "r_output2/Phage/d35_ctrl_phage_co-occurence.csv", row.names = F)\
-\
-#co-occurrence d35 phage subtherapeautic\
-d35_ARG_MGE_phage_sub <- d35_ARG_MGE_phage_sub[,-1]\
-\
-results_d35_ARG_MGE_phage_sub <- rcorr(as.matrix(d35_ARG_MGE_phage_sub), type = c("spearman"))\
-\
-#corrplot(results_d7_ARG_MGE_phage_ctrl)\
-\
-#make two seperate objects for p-value and correlation coefficients\
-rhos_d35_ARG_MGE_phage_sub <- results_d35_ARG_MGE_phage_sub$r\
-ps_d35_ARG_MGE_phage_sub <- results_d35_ARG_MGE_phage_sub$P\
-ns_d35_ARG_MGE_phage_sub <- results_d35_ARG_MGE_phage_sub$n\
-# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff\
-ps_melt_d35_ARG_MGE_phage_sub<-na.omit(melt(ps_d35_ARG_MGE_phage_sub))\
-#creating a qvalue based on FDR\
-ps_melt_d35_ARG_MGE_phage_sub$qval<-p.adjust(ps_melt_d35_ARG_MGE_phage_sub$value, method = "BH")\
-#making column names more relevant\
-\
-names(ps_melt_d35_ARG_MGE_phage_sub)[3]<-"pval"\
-# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here\
-ps_sub_d35_ARG_MGE_phage_sub<-subset(ps_melt_d35_ARG_MGE_phage_sub, qval < q_cutoff)\
-\
-# now melting the rhos, note the similarity between ps_melt and rhos_melt\
-rhos_melt_d35_ARG_MGE_phage_sub <- na.omit(melt(rhos_d35_ARG_MGE_phage_sub))\
-names(rhos_melt_d35_ARG_MGE_phage_sub)[3]<-"rho"\
-\
-# now melting the ns\
-ns_melt_d35_ARG_MGE_phage_sub <- (melt(ns_d35_ARG_MGE_phage_sub))\
-names(ns_melt_d35_ARG_MGE_phage_sub)[3]<-"n"\
-\
-#merging together and remove negative rhos\
-merged_d35_ARG_MGE_phage_sub<-merge(ps_sub_d35_ARG_MGE_phage_sub,rhos_melt_d35_ARG_MGE_phage_sub,by=c("Var1","Var2"))\
-merged_d35_ARG_MGE_phage_sub<-merge(merged_d35_ARG_MGE_phage_sub,ns_melt_d35_ARG_MGE_phage_sub,by=c("Var1","Var2"))\
-\
-merged_d35_ARG_MGE_phage_sub<-subset(merged_d35_ARG_MGE_phage_sub, rho >= 0.8)\
-\
-merged_d35_ARG_MGE_phage_sub2 <- left_join(merged_d35_ARG_MGE_phage_sub, rgi_gff2, by = c("Var1"="gene_name"))\
-merged_d35_ARG_MGE_phage_sub2 <- left_join(merged_d35_ARG_MGE_phage_sub2, rgi_gff2, by = c("Var2"="gene_name2"))\
-\
-merged_d35_ARG_MGE_phage_sub2$AMR_name.x <- merged_d35_ARG_MGE_phage_sub2$AMR_name.x %>% replace_na('MGE')\
-merged_d35_ARG_MGE_phage_sub2$AMR_name.y <- merged_d35_ARG_MGE_phage_sub2$AMR_name.y %>% replace_na('MGE')\
-merged_d35_ARG_MGE_phage_sub3 <- merged_d35_ARG_MGE_phage_sub2 %>%\
-  select(Var1, Var2, pval:AMR_family.y) %>%\
-  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")\
-\
-write.csv(merged_d35_ARG_MGE_phage_sub3, "r_output2/Phage/d35_sub_phage_co-occurence.csv", row.names = F)\
-\
-#co-occurrence d35 phage therapeutic\
-d35_ARG_MGE_phage_ther <- d35_ARG_MGE_phage_ther[,-1]\
-\
-results_d35_ARG_MGE_phage_ther <- rcorr(as.matrix(d35_ARG_MGE_phage_ther), type = c("spearman"))\
-\
-#corrplot(results_d35_ARG_MGE_phage_ther)\
-\
-#make two seperate objects for p-value and correlation coefficients\
-rhos_d35_ARG_MGE_phage_ther <- results_d35_ARG_MGE_phage_ther$r\
-ps_d35_ARG_MGE_phage_ther <- results_d35_ARG_MGE_phage_ther$P\
-ns_d35_ARG_MGE_phage_ther <- results_d35_ARG_MGE_phage_ther$n\
-# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff\
-ps_melt_d35_ARG_MGE_phage_ther<-na.omit(melt(ps_d35_ARG_MGE_phage_ther))\
-#creating a qvalue based on FDR\
-ps_melt_d35_ARG_MGE_phage_ther$qval<-p.adjust(ps_melt_d35_ARG_MGE_phage_ther$value, method = "BH")\
-#making column names more relevant\
-\
-names(ps_melt_d35_ARG_MGE_phage_ther)[3]<-"pval"\
-# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here\
-ps_sub_d35_ARG_MGE_phage_ther<-subset(ps_melt_d35_ARG_MGE_phage_ther, qval < q_cutoff)\
-\
-# now melting the rhos, note the similarity between ps_melt and rhos_melt\
-rhos_melt_d35_ARG_MGE_phage_ther <- na.omit(melt(rhos_d35_ARG_MGE_phage_ther))\
-names(rhos_melt_d35_ARG_MGE_phage_ther)[3]<-"rho"\
-\
-# now melting the ns\
-ns_melt_d35_ARG_MGE_phage_ther <- (melt(ns_d35_ARG_MGE_phage_ther))\
-names(ns_melt_d35_ARG_MGE_phage_ther)[3]<-"n"\
-\
-#merging together and remove negative rhos\
-merged_d35_ARG_MGE_phage_ther<-merge(ps_sub_d35_ARG_MGE_phage_ther,rhos_melt_d35_ARG_MGE_phage_ther,by=c("Var1","Var2"))\
-merged_d35_ARG_MGE_phage_ther<-merge(merged_d35_ARG_MGE_phage_ther,ns_melt_d35_ARG_MGE_phage_ther,by=c("Var1","Var2"))\
-\
-merged_d35_ARG_MGE_phage_ther<-subset(merged_d35_ARG_MGE_phage_ther, rho >= 0.8)\
-\
-merged_d35_ARG_MGE_phage_ther2 <- left_join(merged_d35_ARG_MGE_phage_ther, rgi_gff2, by = c("Var1"="gene_name"))\
-merged_d35_ARG_MGE_phage_ther2 <- left_join(merged_d35_ARG_MGE_phage_ther2, rgi_gff2, by = c("Var2"="gene_name2"))\
-\
-merged_d35_ARG_MGE_phage_ther2$AMR_name.x <- merged_d35_ARG_MGE_phage_ther2$AMR_name.x %>% replace_na('MGE')\
-merged_d35_ARG_MGE_phage_ther2$AMR_name.y <- merged_d35_ARG_MGE_phage_ther2$AMR_name.y %>% replace_na('MGE')\
-merged_d35_ARG_MGE_phage_ther3 <- merged_d35_ARG_MGE_phage_ther2 %>%\
-  select(Var1, Var2, pval:AMR_family.y) %>%\
-  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")\
-\
-write.csv(merged_d35_ARG_MGE_phage_ther3, "r_output2/Phage/d35_ther_phage_co-occurence.csv", row.names = F)\
-\
-#co-occurence d78 phage control\
-d78_ARG_MGE_phage_ctrl <- d78_ARG_MGE_phage_ctrl[,-1]\
-\
-results_d78_ARG_MGE_phage_ctrl <- rcorr(as.matrix(d78_ARG_MGE_phage_ctrl), type = c("spearman"))\
-\
-#corrplot(results_d78_ARG_MGE_phage_ctrl)\
-\
-#make two seperate objects for p-value and correlation coefficients\
-rhos_d78_ARG_MGE_phage_ctrl <- results_d78_ARG_MGE_phage_ctrl$r\
-ps_d78_ARG_MGE_phage_ctrl <- results_d78_ARG_MGE_phage_ctrl$P\
-ns_d78_ARG_MGE_phage_ctrl <- results_d78_ARG_MGE_phage_ctrl$n\
-# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff\
-ps_melt_d78_ARG_MGE_phage_ctrl<-na.omit(melt(ps_d78_ARG_MGE_phage_ctrl))\
-#creating a qvalue based on FDR\
-ps_melt_d78_ARG_MGE_phage_ctrl$qval<-p.adjust(ps_melt_d78_ARG_MGE_phage_ctrl$value, method = "BH")\
-#making column names more relevant\
-\
-names(ps_melt_d78_ARG_MGE_phage_ctrl)[3]<-"pval"\
-# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here\
-ps_sub_d78_ARG_MGE_phage_ctrl<-subset(ps_melt_d78_ARG_MGE_phage_ctrl, qval < q_cutoff)\
-\
-# now melting the rhos, note the similarity between ps_melt and rhos_melt\
-rhos_melt_d78_ARG_MGE_phage_ctrl <- na.omit(melt(rhos_d78_ARG_MGE_phage_ctrl))\
-names(rhos_melt_d78_ARG_MGE_phage_ctrl)[3]<-"rho"\
-\
-# now melting the ns\
-ns_melt_d78_ARG_MGE_phage_ctrl <- (melt(ns_d78_ARG_MGE_phage_ctrl))\
-names(ns_melt_d78_ARG_MGE_phage_ctrl)[3]<-"n"\
-\
-#merging together and remove negative rhos\
-merged_d78_ARG_MGE_phage_ctrl<-merge(ps_sub_d78_ARG_MGE_phage_ctrl,rhos_melt_d78_ARG_MGE_phage_ctrl,by=c("Var1","Var2"))\
-merged_d78_ARG_MGE_phage_ctrl<-merge(merged_d78_ARG_MGE_phage_ctrl,ns_melt_d78_ARG_MGE_phage_ctrl,by=c("Var1","Var2"))\
-\
-merged_d78_ARG_MGE_phage_ctrl<-subset(merged_d78_ARG_MGE_phage_ctrl, rho >= 0.8)\
-\
-merged_d78_ARG_MGE_phage_ctrl2 <- left_join(merged_d78_ARG_MGE_phage_ctrl, rgi_gff2, by = c("Var1"="gene_name"))\
-merged_d78_ARG_MGE_phage_ctrl2 <- left_join(merged_d78_ARG_MGE_phage_ctrl2, rgi_gff2, by = c("Var2"="gene_name2"))\
-\
-merged_d78_ARG_MGE_phage_ctrl2$AMR_name.x <- merged_d78_ARG_MGE_phage_ctrl2$AMR_name.x %>% replace_na('MGE')\
-merged_d78_ARG_MGE_phage_ctrl2$AMR_name.y <- merged_d78_ARG_MGE_phage_ctrl2$AMR_name.y %>% replace_na('MGE')\
-merged_d78_ARG_MGE_phage_ctrl3 <- merged_d78_ARG_MGE_phage_ctrl2 %>%\
-  select(Var1, Var2, pval:AMR_family.y) %>%\
-  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")\
-\
-write.csv(merged_d78_ARG_MGE_phage_ctrl3, "r_output2/Phage/d78_ctrl_phage_co-occurence.csv", row.names = F)\
-\
-#co-occurence d78 phage subtherapeutic\
-d78_ARG_MGE_phage_sub <- d78_ARG_MGE_phage_sub[,-1]\
-\
-results_d78_ARG_MGE_phage_sub <- rcorr(as.matrix(d78_ARG_MGE_phage_sub), type = c("spearman"))\
-\
-#corrplot(results_d78_ARG_MGE_conj_sub)\
-\
-#make two seperate objects for p-value and correlation coefficients\
-rhos_d78_ARG_MGE_phage_sub <- results_d78_ARG_MGE_phage_sub$r\
-ps_d78_ARG_MGE_phage_sub <- results_d78_ARG_MGE_phage_sub$P\
-ns_d78_ARG_MGE_phage_sub <- results_d78_ARG_MGE_phage_sub$n\
-# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff\
-ps_melt_d78_ARG_MGE_phage_sub<-na.omit(melt(ps_d78_ARG_MGE_phage_sub))\
-#creating a qvalue based on FDR\
-ps_melt_d78_ARG_MGE_phage_sub$qval<-p.adjust(ps_melt_d78_ARG_MGE_phage_sub$value, method = "BH")\
-#making column names more relevant\
-\
-names(ps_melt_d78_ARG_MGE_phage_sub)[3]<-"pval"\
-# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here\
-ps_sub_d78_ARG_MGE_phage_sub<-subset(ps_melt_d78_ARG_MGE_phage_sub, qval < q_cutoff)\
-\
-# now melting the rhos, note the similarity between ps_melt and rhos_melt\
-rhos_melt_d78_ARG_MGE_phage_sub <- na.omit(melt(rhos_d78_ARG_MGE_phage_sub))\
-names(rhos_melt_d78_ARG_MGE_phage_sub)[3]<-"rho"\
-\
-# now melting the ns\
-ns_melt_d78_ARG_MGE_phage_sub <- (melt(ns_d78_ARG_MGE_phage_sub))\
-names(ns_melt_d78_ARG_MGE_phage_sub)[3]<-"n"\
-\
-#merging together and remove negative rhos\
-merged_d78_ARG_MGE_phage_sub<-merge(ps_sub_d78_ARG_MGE_phage_sub,rhos_melt_d78_ARG_MGE_phage_sub,by=c("Var1","Var2"))\
-merged_d78_ARG_MGE_phage_sub<-merge(merged_d78_ARG_MGE_phage_sub,ns_melt_d78_ARG_MGE_phage_sub,by=c("Var1","Var2"))\
-\
-merged_d78_ARG_MGE_phage_sub<-subset(merged_d78_ARG_MGE_phage_sub, rho >= 0.8)\
-\
-merged_d78_ARG_MGE_phage_sub2 <- left_join(merged_d78_ARG_MGE_phage_sub, rgi_gff2, by = c("Var1"="gene_name"))\
-merged_d78_ARG_MGE_phage_sub2 <- left_join(merged_d78_ARG_MGE_phage_sub2, rgi_gff2, by = c("Var2"="gene_name2"))\
-\
-merged_d78_ARG_MGE_phage_sub2$AMR_name.x <- merged_d78_ARG_MGE_phage_sub2$AMR_name.x %>% replace_na('MGE')\
-merged_d78_ARG_MGE_phage_sub2$AMR_name.y <- merged_d78_ARG_MGE_phage_sub2$AMR_name.y %>% replace_na('MGE')\
-merged_d78_ARG_MGE_phage_sub3 <- merged_d78_ARG_MGE_phage_sub2 %>%\
-  select(Var1, Var2, pval:AMR_family.y) %>%\
-  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")\
-\
-write.csv(merged_d78_ARG_MGE_phage_sub3, "r_output2/Phage/d78_sub_phage_co-occurence.csv", row.names = F)\
-\
-#co-occurence d78 phage therapeutic\
-d78_ARG_MGE_phage_ther <- d78_ARG_MGE_phage_ther[,-1]\
-\
-results_d78_ARG_MGE_phage_ther <- rcorr(as.matrix(d78_ARG_MGE_phage_ther), type = c("spearman"))\
-\
-#corrplot(results_d78_ARG_MGE_phage_ther)\
-\
-#make two seperate objects for p-value and correlation coefficients\
-rhos_d78_ARG_MGE_phage_ther <- results_d78_ARG_MGE_phage_ther$r\
-ps_d78_ARG_MGE_phage_ther <- results_d78_ARG_MGE_phage_ther$P\
-ns_d78_ARG_MGE_phage_ther <- results_d78_ARG_MGE_phage_ther$n\
-# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff\
-ps_melt_d78_ARG_MGE_phage_ther<-na.omit(melt(ps_d78_ARG_MGE_phage_ther))\
-#creating a qvalue based on FDR\
-ps_melt_d78_ARG_MGE_phage_ther$qval<-p.adjust(ps_melt_d78_ARG_MGE_phage_ther$value, method = "BH")\
-#making column names more relevant\
-\
-names(ps_melt_d78_ARG_MGE_phage_ther)[3]<-"pval"\
-# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here\
-ps_sub_d78_ARG_MGE_phage_ther<-subset(ps_melt_d78_ARG_MGE_phage_ther, qval < q_cutoff)\
-\
-# now melting the rhos, note the similarity between ps_melt and rhos_melt\
-rhos_melt_d78_ARG_MGE_phage_ther <- na.omit(melt(rhos_d78_ARG_MGE_phage_ther))\
-names(rhos_melt_d78_ARG_MGE_phage_ther)[3]<-"rho"\
-\
-# now melting the ns\
-ns_melt_d78_ARG_MGE_phage_ther <- (melt(ns_d78_ARG_MGE_phage_ther))\
-names(ns_melt_d78_ARG_MGE_phage_ther)[3]<-"n"\
-\
-#merging together and remove negative rhos\
-merged_d78_ARG_MGE_phage_ther<-merge(ps_sub_d78_ARG_MGE_phage_ther,rhos_melt_d78_ARG_MGE_phage_ther,by=c("Var1","Var2"))\
-merged_d78_ARG_MGE_phage_ther<-merge(merged_d78_ARG_MGE_phage_ther,ns_melt_d78_ARG_MGE_phage_ther,by=c("Var1","Var2"))\
-\
-merged_d78_ARG_MGE_phage_ther<-subset(merged_d78_ARG_MGE_phage_ther, rho >= 0.8)\
-\
-merged_d78_ARG_MGE_phage_ther2 <- left_join(merged_d78_ARG_MGE_phage_ther, rgi_gff2, by = c("Var1"="gene_name"))\
-merged_d78_ARG_MGE_phage_ther2 <- left_join(merged_d78_ARG_MGE_phage_ther2, rgi_gff2, by = c("Var2"="gene_name2"))\
-\
-merged_d78_ARG_MGE_phage_ther2$AMR_name.x <- merged_d78_ARG_MGE_phage_ther2$AMR_name.x %>% replace_na('MGE')\
-merged_d78_ARG_MGE_phage_ther2$AMR_name.y <- merged_d78_ARG_MGE_phage_ther2$AMR_name.y %>% replace_na('MGE')\
-merged_d78_ARG_MGE_phage_ther3 <- merged_d78_ARG_MGE_phage_ther2 %>%\
-  select(Var1, Var2, pval:AMR_family.y) %>%\
-  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")\
-\
-write.csv(merged_d78_ARG_MGE_phage_ther3, "r_output2/Phage/d78_ther_phage_co-occurence.csv", row.names = F)\
-}
+setwd(dir = "~/Desktop/Tim-Lab/BMD/R_script/output/Network_analysis")
+
+ARG <- read.delim("rgi_count_table.txt", 
+                        sep = "\t", 
+                        header = T, 
+                        row.names = 1)
+
+
+#ARG <- read.csv2("normalized_ARG_rpkm_count_table_pseudocounts.csv", sep = ",", header = T,check.names=FALSE)
+#row.names(ARG) <- ARG[,1]
+#Including T4SS, ICE and IME
+#MGE_conj <- read.delim("function_rpm_conjugation_new.txt", sep = "\t", header = T,check.names=FALSE)
+#Only T4SS and ICE (Conjugative transposon)
+MGE_conj <- read.delim("function_rpm_conjugation.txt", sep = "\t", header = T,check.names=FALSE)
+MGE_phage <- read.delim("function_rpm_phage.csv", sep = ",", header = T,check.names=FALSE)
+#row.names(ARG) <- ARG[,1]
+
+
+rgi_gff <- read.delim("metaspades_500_scaff.prot.fasta.ns.rgi_out.txt", sep = "\t", header = T)
+#colnames(rgi_gff) <- c("seqid", "source", "type", "start", "stop", "score", "strand", "phase", "attributes")
+#rgi_gff$length <- rgi_gff$stop - rgi_gff$start + 1
+#rgi_gff2 <- rgi_gff %>%
+#  separate(attributes, into = c("title", "gene_id", "title2","Gene_name", "title3", "Spectrum", "title4","Category", "title5","Mechanism"), sep = "[;=]") 
+rgi_gff <- separate(data = rgi_gff, col = ORF_ID, into = c("gene", "GeneMark", "length", "To", "start", "end", "Node"), remove = F)
+rgi_gff$gene_name <- paste(rgi_gff$gene,rgi_gff$GeneMark, sep="_")
+rgi_gff2<-dplyr::select(rgi_gff,gene_name,Best_Hit_ARO,Drug.Class,Resistance.Mechanism,AMR.Gene.Family,)
+names(rgi_gff2) <- c("gene_name", "AMR_name", "Drug_Class", "Resistance_Mechanism", "AMR_family")
+rgi_gff2$gene_name2 <- rgi_gff2$gene_name
+
+ARG <- as.data.frame(t(as.matrix(ARG)))
+
+#names(ARG) <- ARG[1,] 
+#ARG <- ARG[-1,]
+
+str(ARG)
+str(MGE_conj)
+#colnames(ARG) <- ARG[2,]
+#colnames(ARG_phage) <- ARG_phage[2,]
+#ARG <- ARG[-1:-2,]
+#ARG <- as.numeric(unlist(ARG))
+#ARG <- as.data.frame(ARG)
+#ARG_phage <- ARG_phage[-1:-2,]
+#ARG <- ARG[-which(ARG$row.name %in% c("d07sub045")), ] 
+
+row.names(MGE_conj) <- MGE_conj[,1]
+MGE_conj <- MGE_conj[,-1:-3]
+row.names(MGE_phage) <- MGE_phage[,1]
+MGE_phage <- MGE_phage[,-1:-3]
+
+meta <- read.csv("mg_metadata.csv")
+meta <- meta[-which(meta$sample %in% c("d07sub045")), ] 
+
+str(meta)
+meta$day <- as.factor(meta$day)
+meta$antibiotic  <- as.factor(meta$antibiotic)
+meta$group <- factor(meta$group, levels = c("Ctrl_7", "Sub_7", "Ther_7", "Ctrl_35", "Sub_35", "Ther_35", "Ctrl_78", "Sub_78", "Ther_78"))
+str(meta)
+
+row.names(meta) <- meta[,1]
+meta <- meta[,-1]
+
+ARG_MGE_conj <- merge(meta,ARG, by.x = 0, by.y = 0 )
+row.names(ARG_MGE_conj) <- ARG_MGE_conj[,1]
+ARG_MGE_conj <- ARG_MGE_conj[,-1]
+ARG_MGE_conj <- ARG_MGE_conj[,-2:-7]
+ARG_MGE_conj <- merge(ARG_MGE_conj, MGE_conj, by.x = 0, by.y = 0)
+row.names(ARG_MGE_conj) <- ARG_MGE_conj[,1]
+ARG_MGE_conj <- ARG_MGE_conj[,-1]
+
+ARG_MGE_phage <- merge(meta,ARG, by.x = 0, by.y = 0)
+row.names(ARG_MGE_phage) <- ARG_MGE_phage[,1]
+ARG_MGE_phage <- ARG_MGE_phage[,-1]
+ARG_MGE_phage <- ARG_MGE_phage[,-2:-7]
+ARG_MGE_phage <- merge(ARG_MGE_phage, MGE_phage, by.x = 0, by.y = 0)
+row.names(ARG_MGE_phage) <- ARG_MGE_phage[,1]
+ARG_MGE_phage <- ARG_MGE_phage[,-1]
+
+#subset by group which is the different antibiotic treatment under each day
+#Conjugation
+#day 7
+d7_ARG_MGE_conj_ctrl <- subset(ARG_MGE_conj, group=="Ctrl_7")
+d7_ARG_MGE_conj_sub <- subset(ARG_MGE_conj, group=="Sub_7")
+d7_ARG_MGE_conj_ther <- subset(ARG_MGE_conj, group=="Ther_7")
+
+#day 35
+d35_ARG_MGE_conj_ctrl <- subset(ARG_MGE_conj, group=="Ctrl_35")
+d35_ARG_MGE_conj_sub <- subset(ARG_MGE_conj, group=="Sub_35")
+d35_ARG_MGE_conj_ther <- subset(ARG_MGE_conj, group=="Ther_35")
+
+#day 78
+d78_ARG_MGE_conj_ctrl <- subset(ARG_MGE_conj, group=="Ctrl_78")
+d78_ARG_MGE_conj_sub <- subset(ARG_MGE_conj, group=="Sub_78")
+d78_ARG_MGE_conj_ther <- subset(ARG_MGE_conj, group=="Ther_78")
+
+#Phage
+#day 7
+d7_ARG_MGE_phage_ctrl <- subset(ARG_MGE_phage, group=="Ctrl_7")
+d7_ARG_MGE_phage_sub <- subset(ARG_MGE_phage, group=="Sub_7")
+d7_ARG_MGE_phage_ther <- subset(ARG_MGE_phage, group=="Ther_7")
+
+#day35
+d35_ARG_MGE_phage_ctrl <- subset(ARG_MGE_phage, group=="Ctrl_35")
+d35_ARG_MGE_phage_sub <- subset(ARG_MGE_phage, group=="Sub_35")
+d35_ARG_MGE_phage_ther <- subset(ARG_MGE_phage, group=="Ther_35")
+
+#day 78
+d78_ARG_MGE_phage_ctrl <- subset(ARG_MGE_phage, group=="Ctrl_78")
+d78_ARG_MGE_phage_sub <- subset(ARG_MGE_phage, group=="Sub_78")
+d78_ARG_MGE_phage_ther <- subset(ARG_MGE_phage, group=="Ther_78")
+
+
+
+
+#colnames(ARG_MGE_conj)
+#colnames(ARG_MGE_phage)
+
+#subset ARG_MGE_conj by day
+#d7_ARG_MGE_conj <- subset(ARG_MGE_conj, day.x=="7")
+#d35_ARG_MGE_conj <- subset(ARG_MGE_conj, day.x=="35")
+#d78_ARG_MGE_conj <- subset(ARG_MGE_conj, day.x=="78")
+
+#subset d7_ARG_MGE_conj by trt
+#d7_ARG_MGE_conj_ctrl <- subset(d7_ARG_MGE_conj, trt.x=="ctrl")
+#d7_ARG_MGE_conj_sub <- subset(d7_ARG_MGE_conj, trt.x=="sub")
+#d7_ARG_MGE_conj_ther <- subset(d7_ARG_MGE_conj, trt.x=="ther")
+
+#subset d35_ARG_MGE_conj by trt
+#d35_ARG_MGE_conj_ctrl <- subset(d35_ARG_MGE_conj, trt.x=="ctrl")
+#d35_ARG_MGE_conj_sub <- subset(d35_ARG_MGE_conj, trt.x=="sub")
+#d35_ARG_MGE_conj_ther <- subset(d35_ARG_MGE_conj, trt.x=="ther")
+
+#subset d78_ARG_MGE_conj by trt
+#d78_ARG_MGE_conj_ctrl <- subset(d78_ARG_MGE_conj, trt.x=="ctrl")
+#d78_ARG_MGE_conj_sub <- subset(d78_ARG_MGE_conj, trt.x=="sub")
+#d78_ARG_MGE_conj_ther <- subset(d78_ARG_MGE_conj, trt.x=="ther")
+
+#subset ARG_MGE_phage by day
+#d7_ARG_MGE_phage <- subset(ARG_MGE_phage, day.x=="7")
+#d35_ARG_MGE_phage <- subset(ARG_MGE_phage, day.x=="35")
+#d78_ARG_MGE_phage <- subset(ARG_MGE_phage, day.x=="78")
+
+#subset d7_ARG_MGE_phage by trt
+#d7_ARG_MGE_phage_ctrl <- subset(d7_ARG_MGE_phage, trt.x=="ctrl")
+#d7_ARG_MGE_phage_sub <- subset(d7_ARG_MGE_phage, trt.x=="sub")
+#d7_ARG_MGE_phage_ther <- subset(d7_ARG_MGE_phage, trt.x=="ther")
+
+#subset d35_ARG_MGE_phage by trt
+#d35_ARG_MGE_phage_ctrl <- subset(d35_ARG_MGE_phage, trt.x=="ctrl")
+#d35_ARG_MGE_phage_sub <- subset(d35_ARG_MGE_phage, trt.x=="sub")
+#d35_ARG_MGE_phage_ther <- subset(d35_ARG_MGE_phage, trt.x=="ther")
+
+#subset d78_ARG_MGE_phage by trt
+#d78_ARG_MGE_phage_ctrl <- subset(d78_ARG_MGE_phage, trt.x=="ctrl")
+#d78_ARG_MGE_phage_sub <- subset(d78_ARG_MGE_phage, trt.x=="sub")
+#d78_ARG_MGE_phage_ther <- subset(d78_ARG_MGE_phage, trt.x=="ther")
+
+
+q_cutoff <- 0.05
+
+#for(i in 1:length(treatments)){
+#subset the data for a particular treatment YOU MUST ENTER THE HEADER OF THE COLUMN THAT HAS THE DIFFERENT TREATMENTS IN THIS CASE “Foaming_Status”
+#print(paste("reading ",treatments[i],sep=""))
+#temp<-subset(dataset, get(my_column)==treatments[i])
+#tempn<-subset(datasetn, get(my_column)==treatments[i])
+#print(paste("finished reading ",treatments[i],sep=""))
+# making an object that has all the results in it (both rho and P values)
+
+d7_ARG_MGE_conj_ctrl <- d7_ARG_MGE_conj_ctrl[,-1]
+str(d7_ARG_MGE_conj_ctrl)
+
+#str(d7_ARG_MGE_conj_sub)
+
+#d7_ARG_MGE_conj_ctrl <- as.numeric(d7_ARG_MGE_conj_ctrl)
+#unlist(d7_ARG_MGE_conj_ctrl)
+
+#sapply(d7_ARG_MGE_conj_ctrl, is.numeric)
+sapply(d7_ARG_MGE_conj_ctrl, as.numeric)
+#lapply(d7_ARG_MGE_conj_ctrl, is.numeric)
+sapply(d7_ARG_MGE_conj_sub, is.numeric)
+sapply(d7_ARG_MGE_conj_ther, is.numeric)
+
+sapply(d35_ARG_MGE_conj_ctrl, is.numeric)
+sapply(d35_ARG_MGE_conj_sub, is.numeric)
+sapply(d35_ARG_MGE_conj_ther, is.numeric)
+
+sapply(d78_ARG_MGE_conj_ctrl, is.numeric)
+sapply(d78_ARG_MGE_conj_sub, is.numeric)
+sapply(d78_ARG_MGE_conj_ther, is.numeric)
+
+sapply(d7_ARG_MGE_phage_ctrl, as.numeric)
+sapply(d7_ARG_MGE_phage_sub, as.numeric)
+sapply(d7_ARG_MGE_phage_ther, as.numeric)
+
+sapply(d35_ARG_MGE_phage_ctrl, as.numeric)
+sapply(d35_ARG_MGE_phage_sub, as.numeric)
+sapply(d35_ARG_MGE_phage_ther, as.numeric)
+
+sapply(d78_ARG_MGE_phage_ctrl, as.numeric)
+sapply(d78_ARG_MGE_phage_sub, as.numeric)
+sapply(d78_ARG_MGE_phage_ther, as.numeric)
+
+
+#co-occurence d7 conjugation control
+#d7_ARG_MGE_conj_ctrl <- d7_ARG_MGE_conj_ctrl[,-1:-2]
+
+#d7_ARG_MGE_conj_ctrl[d7_ARG_MGE_conj_ctrl==0]<-NA
+
+#d7_ARG_MGE_conj_ctrl <-na.omit(d7_ARG_MGE_conj_ctrl)
+is.na(d7_ARG_MGE_conj_ctrl)
+is.nan(d7_ARG_MGE_conj_ctrl)
+is.infinity(d7_ARG_MGE_conj_ctrl)
+
+results_d7_ARG_MGE_conj_ctrl <- rcorr(as.matrix(d7_ARG_MGE_conj_ctrl), type = c("spearman"))
+
+#library(corrplot)
+#corrplot(results_d7_ARG_MGE_conj_ctrl)
+
+#make two seperate objects for p-value and correlation coefficients
+rhos_d7_ARG_MGE_conj_ctrl <- results_d7_ARG_MGE_conj_ctrl$r
+ps_d7_ARG_MGE_conj_ctrl <- results_d7_ARG_MGE_conj_ctrl$P
+ns_d7_ARG_MGE_conj_ctrl <- results_d7_ARG_MGE_conj_ctrl$n
+# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff
+ps_melt_d7_ARG_MGE_conj_ctrl<-na.omit(melt(ps_d7_ARG_MGE_conj_ctrl))
+#creating a qvalue based on FDR
+ps_melt_d7_ARG_MGE_conj_ctrl$qval<-p.adjust(ps_melt_d7_ARG_MGE_conj_ctrl$value, method = "BH")
+#making column names more relevant
+
+names(ps_melt_d7_ARG_MGE_conj_ctrl)[3]<-"pval"
+# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here
+ps_sub_d7_ARG_MGE_conj_ctrl<-subset(ps_melt_d7_ARG_MGE_conj_ctrl, qval < q_cutoff)
+
+# now melting the rhos, note the similarity between ps_melt and rhos_melt
+rhos_melt_d7_ARG_MGE_conj_ctrl <- na.omit(melt(rhos_d7_ARG_MGE_conj_ctrl))
+names(rhos_melt_d7_ARG_MGE_conj_ctrl)[3]<-"rho"
+
+# now melting the ns
+ns_melt_d7_ARG_MGE_conj_ctrl <- (melt(ns_d7_ARG_MGE_conj_ctrl))
+names(ns_melt_d7_ARG_MGE_conj_ctrl)[3]<-"n"
+
+#merging together and remove negative rhos
+merged_d7_ARG_MGE_conj_ctrl<-merge(ps_sub_d7_ARG_MGE_conj_ctrl,rhos_melt_d7_ARG_MGE_conj_ctrl,by=c("Var1","Var2"))
+merged_d7_ARG_MGE_conj_ctrl<-merge(merged_d7_ARG_MGE_conj_ctrl,ns_melt_d7_ARG_MGE_conj_ctrl,by=c("Var1","Var2"))
+
+merged_d7_ARG_MGE_conj_ctrl<-subset(merged_d7_ARG_MGE_conj_ctrl, rho >= 0.8)
+
+merged_d7_ARG_MGE_conj_ctrl2 <- left_join(merged_d7_ARG_MGE_conj_ctrl, rgi_gff2, by = c("Var1"="gene_name"))
+merged_d7_ARG_MGE_conj_ctrl2 <- left_join(merged_d7_ARG_MGE_conj_ctrl2, rgi_gff2, by = c("Var2"="gene_name2"))
+
+merged_d7_ARG_MGE_conj_ctrl2$AMR_name.x <- merged_d7_ARG_MGE_conj_ctrl2$AMR_name.x %>% replace_na('MGE')
+merged_d7_ARG_MGE_conj_ctrl2$AMR_name.y <- merged_d7_ARG_MGE_conj_ctrl2$AMR_name.y %>% replace_na('MGE')
+merged_d7_ARG_MGE_conj_ctrl3$filter <- if(merged_d7_ARG_MGE_conj_ctrl2 %>%
+  select(Var1, Var2, pval:AMR_family.y) %>%
+  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE") = 1)
+
+#  merged_d7_ARG_MGE_conj_ctrl4 <- merged_d7_ARG_MGE_conj_ctrl2 %>%
+#  select(Var1, Var2, pval:AMR_family.y) %>%
+#  filter( AMR_name.x !="MGE", AMR_name.y == "MGE")
+  
+  
+write.csv(merged_d7_ARG_MGE_conj_ctrl3, "r_output2/Conjugation/d7_ctrl_conj_co-occurence.csv", row.names = F)
+
+#co-occurence d7 conjugation subtherapeutic
+d7_ARG_MGE_conj_sub <- d7_ARG_MGE_conj_sub[,-1]
+
+results_d7_ARG_MGE_conj_sub <- rcorr(as.matrix(d7_ARG_MGE_conj_sub), type = c("spearman"))
+
+#corrplot(results_d7_ARG_MGE_conj_ctrl)
+
+#make two seperate objects for p-value and correlation coefficients
+rhos_d7_ARG_MGE_conj_sub <- results_d7_ARG_MGE_conj_sub$r
+ps_d7_ARG_MGE_conj_sub <- results_d7_ARG_MGE_conj_sub$P
+ns_d7_ARG_MGE_conj_sub <- results_d7_ARG_MGE_conj_sub$n
+# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff
+ps_melt_d7_ARG_MGE_conj_sub <- na.omit(melt(ps_d7_ARG_MGE_conj_sub))
+#creating a qvalue based on FDR
+ps_melt_d7_ARG_MGE_conj_sub$qval<-p.adjust(ps_melt_d7_ARG_MGE_conj_sub$value, method = "BH")
+#making column names more relevant
+
+names(ps_melt_d7_ARG_MGE_conj_sub)[3]<-"pval"
+# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here
+ps_sub_d7_ARG_MGE_conj_sub <- subset(ps_melt_d7_ARG_MGE_conj_sub, qval < q_cutoff)
+
+# now melting the rhos, note the similarity between ps_melt and rhos_melt
+rhos_melt_d7_ARG_MGE_conj_sub <- na.omit(melt(rhos_d7_ARG_MGE_conj_sub))
+names(rhos_melt_d7_ARG_MGE_conj_sub)[3]<-"rho"
+
+# now melting the ns
+ns_melt_d7_ARG_MGE_conj_sub <- (melt(ns_d7_ARG_MGE_conj_sub))
+names(ns_melt_d7_ARG_MGE_conj_sub)[3]<-"n"
+
+#merging together and remove negative rhos
+merged_d7_ARG_MGE_conj_sub<-merge(ps_sub_d7_ARG_MGE_conj_sub,rhos_melt_d7_ARG_MGE_conj_sub,by=c("Var1","Var2"))
+merged_d7_ARG_MGE_conj_sub<-merge(merged_d7_ARG_MGE_conj_sub,ns_melt_d7_ARG_MGE_conj_sub,by=c("Var1","Var2"))
+
+merged_d7_ARG_MGE_conj_sub<-subset(merged_d7_ARG_MGE_conj_sub, rho >= 0.8)
+
+merged_d7_ARG_MGE_conj_sub2 <- left_join(merged_d7_ARG_MGE_conj_sub, rgi_gff2, by = c("Var1"="gene_name"))
+merged_d7_ARG_MGE_conj_sub2 <- left_join(merged_d7_ARG_MGE_conj_sub2, rgi_gff2, by = c("Var2"="gene_name2"))
+
+merged_d7_ARG_MGE_conj_sub2$AMR_name.x <- merged_d7_ARG_MGE_conj_sub2$AMR_name.x %>% replace_na('MGE')
+merged_d7_ARG_MGE_conj_sub2$AMR_name.y <- merged_d7_ARG_MGE_conj_sub2$AMR_name.y %>% replace_na('MGE')
+merged_d7_ARG_MGE_conj_sub3 <- merged_d7_ARG_MGE_conj_sub2 %>%
+                                          select(Var1, Var2, pval:AMR_family.y) %>%
+                                          filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")
+  
+
+write.csv(merged_d7_ARG_MGE_conj_sub3, "r_output2/Conjugation/d7_sub_conj_co-occurence.csv", row.names = F)
+
+#co-occurence d7 conjugation therapaeutic
+d7_ARG_MGE_conj_ther <- d7_ARG_MGE_conj_ther[,-1]
+
+results_d7_ARG_MGE_conj_ther <- rcorr(as.matrix(d7_ARG_MGE_conj_ther), type = c("spearman"))
+
+#corrplot(results_d7_ARG_MGE_conj_ther)
+
+#make two seperate objects for p-value and correlation coefficients
+rhos_d7_ARG_MGE_conj_ther <- results_d7_ARG_MGE_conj_ther$r
+ps_d7_ARG_MGE_conj_ther <- results_d7_ARG_MGE_conj_ther$P
+ns_d7_ARG_MGE_conj_ther <- results_d7_ARG_MGE_conj_ther$n
+# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff
+ps_melt_d7_ARG_MGE_conj_ther<-na.omit(melt(ps_d7_ARG_MGE_conj_ther))
+#creating a qvalue based on FDR
+ps_melt_d7_ARG_MGE_conj_ther$qval<-p.adjust(ps_melt_d7_ARG_MGE_conj_ther$value, method = "BH")
+#making column names more relevant
+
+names(ps_melt_d7_ARG_MGE_conj_ther)[3]<-"pval"
+# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here
+ps_sub_d7_ARG_MGE_conj_ther<-subset(ps_melt_d7_ARG_MGE_conj_ther, qval < q_cutoff)
+
+# now melting the rhos, note the similarity between ps_melt and rhos_melt
+rhos_melt_d7_ARG_MGE_conj_ther <- na.omit(melt(rhos_d7_ARG_MGE_conj_ther))
+names(rhos_melt_d7_ARG_MGE_conj_ther)[3]<-"rho"
+
+# now melting the ns
+ns_melt_d7_ARG_MGE_conj_ther <- (melt(ns_d7_ARG_MGE_conj_ther))
+names(ns_melt_d7_ARG_MGE_conj_ther)[3]<-"n"
+
+#merging together and remove negative rhos
+merged_d7_ARG_MGE_conj_ther<-merge(ps_sub_d7_ARG_MGE_conj_ther,rhos_melt_d7_ARG_MGE_conj_ther,by=c("Var1","Var2"))
+merged_d7_ARG_MGE_conj_ther<-merge(merged_d7_ARG_MGE_conj_ther,ns_melt_d7_ARG_MGE_conj_ther,by=c("Var1","Var2"))
+
+merged_d7_ARG_MGE_conj_ther<-subset(merged_d7_ARG_MGE_conj_ther, rho >= 0.8)
+
+merged_d7_ARG_MGE_conj_ther2 <- left_join(merged_d7_ARG_MGE_conj_ther, rgi_gff2, by = c("Var1"="gene_name"))
+merged_d7_ARG_MGE_conj_ther2 <- left_join(merged_d7_ARG_MGE_conj_ther2, rgi_gff2, by = c("Var2"="gene_name2"))
+
+merged_d7_ARG_MGE_conj_ther2$AMR_name.x <- merged_d7_ARG_MGE_conj_ther2$AMR_name.x %>% replace_na('MGE')
+merged_d7_ARG_MGE_conj_ther2$AMR_name.y <- merged_d7_ARG_MGE_conj_ther2$AMR_name.y %>% replace_na('MGE')
+merged_d7_ARG_MGE_conj_ther4 <- merged_d7_ARG_MGE_conj_ther2 %>%
+  select(Var1, Var2, pval:AMR_family.y) %>%
+  filter(AMR_name.x!= "MGE", AMR_name.y== "MGE")
+
+write.csv(merged_d7_ARG_MGE_conj_ther3, "r_output2/Conjugation/d7_ther_conj_co-occurence.csv", row.names = F)
+
+#co-occurence d35 conjugation control
+d35_ARG_MGE_conj_ctrl <- d35_ARG_MGE_conj_ctrl[,-1]
+
+results_d35_ARG_MGE_conj_ctrl <- rcorr(as.matrix(d35_ARG_MGE_conj_ctrl), type = c("spearman"))
+
+#corrplot(results_d35_ARG_MGE_conj_ctrl)
+
+#make two seperate objects for p-value and correlation coefficients
+rhos_d35_ARG_MGE_conj_ctrl <- results_d35_ARG_MGE_conj_ctrl$r
+ps_d35_ARG_MGE_conj_ctrl <- results_d35_ARG_MGE_conj_ctrl$P
+ns_d35_ARG_MGE_conj_ctrl <- results_d35_ARG_MGE_conj_ctrl$n
+# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff
+ps_melt_d35_ARG_MGE_conj_ctrl<-na.omit(melt(ps_d35_ARG_MGE_conj_ctrl))
+#creating a qvalue based on FDR
+ps_melt_d35_ARG_MGE_conj_ctrl$qval<-p.adjust(ps_melt_d35_ARG_MGE_conj_ctrl$value, method = "BH")
+#making column names more relevant
+
+names(ps_melt_d35_ARG_MGE_conj_ctrl)[3]<-"pval"
+# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here
+ps_sub_d35_ARG_MGE_conj_ctrl<-subset(ps_melt_d35_ARG_MGE_conj_ctrl, qval < q_cutoff)
+
+# now melting the rhos, note the similarity between ps_melt and rhos_melt
+rhos_melt_d35_ARG_MGE_conj_ctrl <- na.omit(melt(rhos_d35_ARG_MGE_conj_ctrl))
+names(rhos_melt_d35_ARG_MGE_conj_ctrl)[3]<-"rho"
+
+# now melting the ns
+ns_melt_d35_ARG_MGE_conj_ctrl <- (melt(ns_d35_ARG_MGE_conj_ctrl))
+names(ns_melt_d35_ARG_MGE_conj_ctrl)[3]<-"n"
+
+#merging together and remove negative rhos
+merged_d35_ARG_MGE_conj_ctrl<-merge(ps_sub_d35_ARG_MGE_conj_ctrl,rhos_melt_d35_ARG_MGE_conj_ctrl,by=c("Var1","Var2"))
+merged_d35_ARG_MGE_conj_ctrl<-merge(merged_d35_ARG_MGE_conj_ctrl,ns_melt_d35_ARG_MGE_conj_ctrl,by=c("Var1","Var2"))
+
+merged_d35_ARG_MGE_conj_ctrl<-subset(merged_d35_ARG_MGE_conj_ctrl, rho >= 0.8)
+
+merged_d35_ARG_MGE_conj_ctrl2 <- left_join(merged_d35_ARG_MGE_conj_ctrl, rgi_gff2, by = c("Var1"="gene_name"))
+merged_d35_ARG_MGE_conj_ctrl2 <- left_join(merged_d35_ARG_MGE_conj_ctrl2, rgi_gff2, by = c("Var2"="gene_name2"))
+
+merged_d35_ARG_MGE_conj_ctrl2$AMR_name.x <- merged_d35_ARG_MGE_conj_ctrl2$AMR_name.x %>% replace_na('MGE')
+merged_d35_ARG_MGE_conj_ctrl2$AMR_name.y <- merged_d35_ARG_MGE_conj_ctrl2$AMR_name.y %>% replace_na('MGE')
+merged_d35_ARG_MGE_conj_ctrl3 <- merged_d35_ARG_MGE_conj_ctrl2 %>%
+  select(Var1, Var2, pval:AMR_family.y) %>%
+  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")
+
+
+write.csv(merged_d35_ARG_MGE_conj_ctrl3, "r_output2/Conjugation/d35_ctrl_conj_co-occurence.csv", row.names = F)
+
+#co-occurence d35 conjugation subtherapeautic
+d35_ARG_MGE_conj_sub <- d35_ARG_MGE_conj_sub[,-1]
+
+results_d35_ARG_MGE_conj_sub <- rcorr(as.matrix(d35_ARG_MGE_conj_sub), type = c("spearman"))
+
+#corrplot(results_d7_ARG_MGE_conj_ctrl)
+
+#make two seperate objects for p-value and correlation coefficients
+rhos_d35_ARG_MGE_conj_sub <- results_d35_ARG_MGE_conj_sub$r
+ps_d35_ARG_MGE_conj_sub <- results_d35_ARG_MGE_conj_sub$P
+ns_d35_ARG_MGE_conj_sub <- results_d35_ARG_MGE_conj_sub$n
+# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff
+ps_melt_d35_ARG_MGE_conj_sub<-na.omit(melt(ps_d35_ARG_MGE_conj_sub))
+#creating a qvalue based on FDR
+ps_melt_d35_ARG_MGE_conj_sub$qval<-p.adjust(ps_melt_d35_ARG_MGE_conj_sub$value, method = "BH")
+#making column names more relevant
+
+names(ps_melt_d35_ARG_MGE_conj_sub)[3]<-"pval"
+# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here
+ps_sub_d35_ARG_MGE_conj_sub<-subset(ps_melt_d35_ARG_MGE_conj_sub, qval < q_cutoff)
+
+# now melting the rhos, note the similarity between ps_melt and rhos_melt
+rhos_melt_d35_ARG_MGE_conj_sub <- na.omit(melt(rhos_d35_ARG_MGE_conj_sub))
+names(rhos_melt_d35_ARG_MGE_conj_sub)[3]<-"rho"
+
+# now melting the ns
+ns_melt_d35_ARG_MGE_conj_sub <- (melt(ns_d35_ARG_MGE_conj_sub))
+names(ns_melt_d35_ARG_MGE_conj_sub)[3]<-"n"
+
+#merging together and remove negative rhos
+merged_d35_ARG_MGE_conj_sub<-merge(ps_sub_d35_ARG_MGE_conj_sub,rhos_melt_d35_ARG_MGE_conj_sub,by=c("Var1","Var2"))
+merged_d35_ARG_MGE_conj_sub<-merge(merged_d35_ARG_MGE_conj_sub,ns_melt_d35_ARG_MGE_conj_sub,by=c("Var1","Var2"))
+
+merged_d35_ARG_MGE_conj_sub<-subset(merged_d35_ARG_MGE_conj_sub, rho >= 0.8)
+
+merged_d35_ARG_MGE_conj_sub2 <- left_join(merged_d35_ARG_MGE_conj_sub, rgi_gff2, by = c("Var1"="gene_name"))
+merged_d35_ARG_MGE_conj_sub2 <- left_join(merged_d35_ARG_MGE_conj_sub2, rgi_gff2, by = c("Var2"="gene_name2"))
+
+merged_d35_ARG_MGE_conj_sub2$AMR_name.x <- merged_d35_ARG_MGE_conj_sub2$AMR_name.x %>% replace_na('MGE')
+merged_d35_ARG_MGE_conj_sub2$AMR_name.y <- merged_d35_ARG_MGE_conj_sub2$AMR_name.y %>% replace_na('MGE')
+merged_d35_ARG_MGE_conj_sub3 <- merged_d35_ARG_MGE_conj_sub2 %>%
+  select(Var1, Var2, pval:AMR_family.y) %>%
+  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")
+
+write.csv(merged_d35_ARG_MGE_conj_sub3, "r_output2/Conjugation/d35_sub_conj_co-occurence.csv", row.names = F)
+
+#co-occurrence d35 conjugation therapeutic
+d35_ARG_MGE_conj_ther <- d35_ARG_MGE_conj_ther[,-1]
+
+results_d35_ARG_MGE_conj_ther <- rcorr(as.matrix(d35_ARG_MGE_conj_ther), type = c("spearman"))
+
+#corrplot(results_d35_ARG_MGE_conj_ther)
+
+#make two seperate objects for p-value and correlation coefficients
+rhos_d35_ARG_MGE_conj_ther <- results_d35_ARG_MGE_conj_ther$r
+ps_d35_ARG_MGE_conj_ther <- results_d35_ARG_MGE_conj_ther$P
+ns_d35_ARG_MGE_conj_ther <- results_d35_ARG_MGE_conj_ther$n
+# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff
+ps_melt_d35_ARG_MGE_conj_ther<-na.omit(melt(ps_d35_ARG_MGE_conj_ther))
+#creating a qvalue based on FDR
+ps_melt_d35_ARG_MGE_conj_ther$qval<-p.adjust(ps_melt_d35_ARG_MGE_conj_ther$value, method = "BH")
+#making column names more relevant
+
+names(ps_melt_d35_ARG_MGE_conj_ther)[3]<-"pval"
+# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here
+ps_sub_d35_ARG_MGE_conj_ther<-subset(ps_melt_d35_ARG_MGE_conj_ther, qval < q_cutoff)
+
+# now melting the rhos, note the similarity between ps_melt and rhos_melt
+rhos_melt_d35_ARG_MGE_conj_ther <- na.omit(melt(rhos_d35_ARG_MGE_conj_ther))
+names(rhos_melt_d35_ARG_MGE_conj_ther)[3]<-"rho"
+
+# now melting the ns
+ns_melt_d35_ARG_MGE_conj_ther <- (melt(ns_d35_ARG_MGE_conj_ther))
+names(ns_melt_d35_ARG_MGE_conj_ther)[3]<-"n"
+
+#merging together and remove negative rhos
+merged_d35_ARG_MGE_conj_ther<-merge(ps_sub_d35_ARG_MGE_conj_ther,rhos_melt_d35_ARG_MGE_conj_ther,by=c("Var1","Var2"))
+merged_d35_ARG_MGE_conj_ther<-merge(merged_d35_ARG_MGE_conj_ther,ns_melt_d35_ARG_MGE_conj_ther,by=c("Var1","Var2"))
+
+merged_d35_ARG_MGE_conj_ther<-subset(merged_d35_ARG_MGE_conj_ther, rho >= 0.8)
+
+merged_d35_ARG_MGE_conj_ther2 <- left_join(merged_d35_ARG_MGE_conj_ther, rgi_gff2, by = c("Var1"="gene_name"))
+merged_d35_ARG_MGE_conj_ther2 <- left_join(merged_d35_ARG_MGE_conj_ther2, rgi_gff2, by = c("Var2"="gene_name2"))
+
+merged_d35_ARG_MGE_conj_ther2$AMR_name.x <- merged_d35_ARG_MGE_conj_ther2$AMR_name.x %>% replace_na('MGE')
+merged_d35_ARG_MGE_conj_ther2$AMR_name.y <- merged_d35_ARG_MGE_conj_ther2$AMR_name.y %>% replace_na('MGE')
+merged_d35_ARG_MGE_conj_ther3 <- merged_d35_ARG_MGE_conj_ther2 %>%
+  select(Var1, Var2, pval:AMR_family.y) %>%
+  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")
+
+write.csv(merged_d35_ARG_MGE_conj_ther3, "r_output2/Conjugation/d35_ther_conj_co-occurence.csv", row.names = F)
+
+#co-occurence d78 conjugation control
+d78_ARG_MGE_conj_ctrl <- d78_ARG_MGE_conj_ctrl[,-1]
+
+results_d78_ARG_MGE_conj_ctrl <- rcorr(as.matrix(d78_ARG_MGE_conj_ctrl), type = c("spearman"))
+
+#corrplot(results_d78_ARG_MGE_conj_ctrl)
+
+#make two seperate objects for p-value and correlation coefficients
+rhos_d78_ARG_MGE_conj_ctrl <- results_d78_ARG_MGE_conj_ctrl$r
+ps_d78_ARG_MGE_conj_ctrl <- results_d78_ARG_MGE_conj_ctrl$P
+ns_d78_ARG_MGE_conj_ctrl <- results_d78_ARG_MGE_conj_ctrl$n
+# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff
+ps_melt_d78_ARG_MGE_conj_ctrl<-na.omit(melt(ps_d78_ARG_MGE_conj_ctrl))
+#creating a qvalue based on FDR
+ps_melt_d78_ARG_MGE_conj_ctrl$qval<-p.adjust(ps_melt_d78_ARG_MGE_conj_ctrl$value, method = "BH")
+#making column names more relevant
+
+names(ps_melt_d78_ARG_MGE_conj_ctrl)[3]<-"pval"
+# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here
+ps_sub_d78_ARG_MGE_conj_ctrl<-subset(ps_melt_d78_ARG_MGE_conj_ctrl, qval < q_cutoff)
+
+# now melting the rhos, note the similarity between ps_melt and rhos_melt
+rhos_melt_d78_ARG_MGE_conj_ctrl <- na.omit(melt(rhos_d78_ARG_MGE_conj_ctrl))
+names(rhos_melt_d78_ARG_MGE_conj_ctrl)[3]<-"rho"
+
+# now melting the ns
+ns_melt_d78_ARG_MGE_conj_ctrl <- (melt(ns_d78_ARG_MGE_conj_ctrl))
+names(ns_melt_d78_ARG_MGE_conj_ctrl)[3]<-"n"
+
+#merging together and remove negative rhos
+merged_d78_ARG_MGE_conj_ctrl<-merge(ps_sub_d78_ARG_MGE_conj_ctrl,rhos_melt_d78_ARG_MGE_conj_ctrl,by=c("Var1","Var2"))
+merged_d78_ARG_MGE_conj_ctrl<-merge(merged_d78_ARG_MGE_conj_ctrl,ns_melt_d78_ARG_MGE_conj_ctrl,by=c("Var1","Var2"))
+
+merged_d78_ARG_MGE_conj_ctrl<-subset(merged_d78_ARG_MGE_conj_ctrl, rho >= 0.8)
+
+merged_d78_ARG_MGE_conj_ctrl2 <- left_join(merged_d78_ARG_MGE_conj_ctrl, rgi_gff2, by = c("Var1"="gene_name"))
+merged_d78_ARG_MGE_conj_ctrl2 <- left_join(merged_d78_ARG_MGE_conj_ctrl2, rgi_gff2, by = c("Var2"="gene_name2"))
+
+merged_d78_ARG_MGE_conj_ctrl2$AMR_name.x <- merged_d78_ARG_MGE_conj_ctrl2$AMR_name.x %>% replace_na('MGE')
+merged_d78_ARG_MGE_conj_ctrl2$AMR_name.y <- merged_d78_ARG_MGE_conj_ctrl2$AMR_name.y %>% replace_na('MGE')
+merged_d78_ARG_MGE_conj_ctrl3 <- merged_d78_ARG_MGE_conj_ctrl2 %>%
+  select(Var1, Var2, pval:AMR_family.y) %>%
+  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")
+
+write.csv(merged_d78_ARG_MGE_conj_ctrl3, "r_output2/Conjugation/d78_ctrl_conj_co-occurence.csv", row.names = F)
+
+#co-occurence d78 conjugation subtherapeutic
+d78_ARG_MGE_conj_sub <- d78_ARG_MGE_conj_sub[,-1]
+
+results_d78_ARG_MGE_conj_sub <- rcorr(as.matrix(d78_ARG_MGE_conj_sub), type = c("spearman"))
+
+#corrplot(results_d78_ARG_MGE_conj_sub)
+
+#make two seperate objects for p-value and correlation coefficients
+rhos_d78_ARG_MGE_conj_sub <- results_d78_ARG_MGE_conj_sub$r
+ps_d78_ARG_MGE_conj_sub <- results_d78_ARG_MGE_conj_sub$P
+ns_d78_ARG_MGE_conj_sub <- results_d78_ARG_MGE_conj_sub$n
+# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff
+ps_melt_d78_ARG_MGE_conj_sub<-na.omit(melt(ps_d78_ARG_MGE_conj_sub))
+#creating a qvalue based on FDR
+ps_melt_d78_ARG_MGE_conj_sub$qval<-p.adjust(ps_melt_d78_ARG_MGE_conj_sub$value, method = "BH")
+#making column names more relevant
+
+names(ps_melt_d78_ARG_MGE_conj_sub)[3]<-"pval"
+# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here
+ps_sub_d78_ARG_MGE_conj_sub<-subset(ps_melt_d78_ARG_MGE_conj_sub, qval < q_cutoff)
+
+# now melting the rhos, note the similarity between ps_melt and rhos_melt
+rhos_melt_d78_ARG_MGE_conj_sub <- na.omit(melt(rhos_d78_ARG_MGE_conj_sub))
+names(rhos_melt_d78_ARG_MGE_conj_sub)[3]<-"rho"
+
+# now melting the ns
+ns_melt_d78_ARG_MGE_conj_sub <- (melt(ns_d78_ARG_MGE_conj_sub))
+names(ns_melt_d78_ARG_MGE_conj_sub)[3]<-"n"
+
+#merging together and remove negative rhos
+merged_d78_ARG_MGE_conj_sub<-merge(ps_sub_d78_ARG_MGE_conj_sub,rhos_melt_d78_ARG_MGE_conj_sub,by=c("Var1","Var2"))
+merged_d78_ARG_MGE_conj_sub<-merge(merged_d78_ARG_MGE_conj_sub,ns_melt_d78_ARG_MGE_conj_sub,by=c("Var1","Var2"))
+
+merged_d78_ARG_MGE_conj_sub<-subset(merged_d78_ARG_MGE_conj_sub, rho >= 0.8)
+
+merged_d78_ARG_MGE_conj_sub2 <- left_join(merged_d78_ARG_MGE_conj_sub, rgi_gff2, by = c("Var1"="gene_name"))
+merged_d78_ARG_MGE_conj_sub2 <- left_join(merged_d78_ARG_MGE_conj_sub2, rgi_gff2, by = c("Var2"="gene_name2"))
+
+merged_d78_ARG_MGE_conj_sub2$AMR_name.x <- merged_d78_ARG_MGE_conj_sub2$AMR_name.x %>% replace_na('MGE')
+merged_d78_ARG_MGE_conj_sub2$AMR_name.y <- merged_d78_ARG_MGE_conj_sub2$AMR_name.y %>% replace_na('MGE')
+merged_d78_ARG_MGE_conj_sub3 <- merged_d78_ARG_MGE_conj_sub2 %>%
+  select(Var1, Var2, pval:AMR_family.y) %>%
+  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")
+
+write.csv(merged_d78_ARG_MGE_conj_sub3, "r_output2/Conjugation/d78_sub_conj_co-occurence.csv", row.names = F)
+
+#co-occurence d78 conjugation therapeutic
+d78_ARG_MGE_conj_ther <- d78_ARG_MGE_conj_ther[,-1]
+
+results_d78_ARG_MGE_conj_ther <- rcorr(as.matrix(d78_ARG_MGE_conj_ther), type = c("spearman"))
+
+#corrplot(results_d78_ARG_MGE_conj_ther)
+
+#make two seperate objects for p-value and correlation coefficients
+rhos_d78_ARG_MGE_conj_ther <- results_d78_ARG_MGE_conj_ther$r
+ps_d78_ARG_MGE_conj_ther <- results_d78_ARG_MGE_conj_ther$P
+ns_d78_ARG_MGE_conj_ther <- results_d78_ARG_MGE_conj_ther$n
+# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff
+ps_melt_d78_ARG_MGE_conj_ther<-na.omit(melt(ps_d78_ARG_MGE_conj_ther))
+#creating a qvalue based on FDR
+ps_melt_d78_ARG_MGE_conj_ther$qval<-p.adjust(ps_melt_d78_ARG_MGE_conj_ther$value, method = "BH")
+#making column names more relevant
+
+names(ps_melt_d78_ARG_MGE_conj_ther)[3]<-"pval"
+# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here
+ps_sub_d78_ARG_MGE_conj_ther<-subset(ps_melt_d78_ARG_MGE_conj_ther, qval < q_cutoff)
+
+# now melting the rhos, note the similarity between ps_melt and rhos_melt
+rhos_melt_d78_ARG_MGE_conj_ther <- na.omit(melt(rhos_d78_ARG_MGE_conj_ther))
+names(rhos_melt_d78_ARG_MGE_conj_ther)[3]<-"rho"
+
+# now melting the ns
+ns_melt_d78_ARG_MGE_conj_ther <- (melt(ns_d78_ARG_MGE_conj_ther))
+names(ns_melt_d78_ARG_MGE_conj_ther)[3]<-"n"
+
+#merging together and remove negative rhos
+merged_d78_ARG_MGE_conj_ther<-merge(ps_sub_d78_ARG_MGE_conj_ther,rhos_melt_d78_ARG_MGE_conj_ther,by=c("Var1","Var2"))
+merged_d78_ARG_MGE_conj_ther<-merge(merged_d78_ARG_MGE_conj_ther,ns_melt_d78_ARG_MGE_conj_ther,by=c("Var1","Var2"))
+
+merged_d78_ARG_MGE_conj_ther<-subset(merged_d78_ARG_MGE_conj_ther, rho >= 0.8)
+
+merged_d78_ARG_MGE_conj_ther2 <- left_join(merged_d78_ARG_MGE_conj_ther, rgi_gff2, by = c("Var1"="gene_name"))
+merged_d78_ARG_MGE_conj_ther2 <- left_join(merged_d78_ARG_MGE_conj_ther2, rgi_gff2, by = c("Var2"="gene_name2"))
+
+merged_d78_ARG_MGE_conj_ther2$AMR_name.x <- merged_d78_ARG_MGE_conj_ther2$AMR_name.x %>% replace_na('MGE')
+merged_d78_ARG_MGE_conj_ther2$AMR_name.y <- merged_d78_ARG_MGE_conj_ther2$AMR_name.y %>% replace_na('MGE')
+merged_d78_ARG_MGE_conj_ther3 <- merged_d78_ARG_MGE_conj_ther2 %>%
+  select(Var1, Var2, pval:AMR_family.y) %>%
+  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")
+
+write.csv(merged_d78_ARG_MGE_conj_ther3, "r_output2/Conjugation/d78_ther_conj_co-occurence.csv", row.names = F)
+
+##########
+#########
+#########
+
+#co-occurence d7 phage control
+d7_ARG_MGE_phage_ctrl <- d7_ARG_MGE_phage_ctrl[,-1]
+
+results_d7_ARG_MGE_phage_ctrl <- rcorr(as.matrix(d7_ARG_MGE_phage_ctrl), type = c("spearman"))
+
+#corrplot(results_d7_ARG_MGE_conj_ctrl)
+
+#make two seperate objects for p-value and correlation coefficients
+rhos_d7_ARG_MGE_phage_ctrl <- results_d7_ARG_MGE_phage_ctrl$r
+ps_d7_ARG_MGE_phage_ctrl <- results_d7_ARG_MGE_phage_ctrl$P
+ns_d7_ARG_MGE_phage_ctrl <- results_d7_ARG_MGE_phage_ctrl$n
+# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff
+ps_melt_d7_ARG_MGE_phage_ctrl<-na.omit(melt(ps_d7_ARG_MGE_phage_ctrl))
+#creating a qvalue based on FDR
+ps_melt_d7_ARG_MGE_phage_ctrl$qval<-p.adjust(ps_melt_d7_ARG_MGE_phage_ctrl$value, method = "BH")
+#making column names more relevant
+
+names(ps_melt_d7_ARG_MGE_phage_ctrl)[3]<-"pval"
+# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here
+ps_sub_d7_ARG_MGE_phage_ctrl<-subset(ps_melt_d7_ARG_MGE_phage_ctrl, qval < q_cutoff)
+
+# now melting the rhos, note the similarity between ps_melt and rhos_melt
+rhos_melt_d7_ARG_MGE_phage_ctrl <- na.omit(melt(rhos_d7_ARG_MGE_phage_ctrl))
+names(rhos_melt_d7_ARG_MGE_phage_ctrl)[3]<-"rho"
+
+# now melting the ns
+ns_melt_d7_ARG_MGE_phage_ctrl <- (melt(ns_d7_ARG_MGE_phage_ctrl))
+names(ns_melt_d7_ARG_MGE_phage_ctrl)[3]<-"n"
+
+#merging together and remove negative rhos
+merged_d7_ARG_MGE_phage_ctrl<-merge(ps_sub_d7_ARG_MGE_phage_ctrl,rhos_melt_d7_ARG_MGE_phage_ctrl,by=c("Var1","Var2"))
+merged_d7_ARG_MGE_phage_ctrl<-merge(merged_d7_ARG_MGE_phage_ctrl,ns_melt_d7_ARG_MGE_phage_ctrl,by=c("Var1","Var2"))
+
+merged_d7_ARG_MGE_phage_ctrl<-subset(merged_d7_ARG_MGE_phage_ctrl, rho >= 0.8)
+
+merged_d7_ARG_MGE_phage_ctrl2 <- left_join(merged_d7_ARG_MGE_phage_ctrl, rgi_gff2, by = c("Var1"="gene_name"))
+merged_d7_ARG_MGE_phage_ctrl2 <- left_join(merged_d7_ARG_MGE_phage_ctrl2, rgi_gff2, by = c("Var2"="gene_name2"))
+
+merged_d7_ARG_MGE_phage_ctrl2$AMR_name.x <- merged_d7_ARG_MGE_phage_ctrl2$AMR_name.x %>% replace_na('MGE')
+merged_d7_ARG_MGE_phage_ctrl2$AMR_name.y <- merged_d7_ARG_MGE_phage_ctrl2$AMR_name.y %>% replace_na('MGE')
+merged_d7_ARG_MGE_phage_ctrl3 <- merged_d7_ARG_MGE_phage_ctrl2 %>%
+  select(Var1, Var2, pval:AMR_family.y) %>%
+  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")
+
+write.csv(merged_d7_ARG_MGE_phage_ctrl3, "r_output2/Phage/d7_ctrl_phage_co-occurence.csv", row.names = F)
+
+#co-occurence d7 phage subtherapeutic
+d7_ARG_MGE_phage_sub <- d7_ARG_MGE_phage_sub[,-1]
+
+results_d7_ARG_MGE_phage_sub <- rcorr(as.matrix(d7_ARG_MGE_phage_sub), type = c("spearman"))
+
+#corrplot(results_d7_ARG_MGE_conj_ctrl)
+
+#make two seperate objects for p-value and correlation coefficients
+rhos_d7_ARG_MGE_phage_sub <- results_d7_ARG_MGE_phage_sub$r
+ps_d7_ARG_MGE_phage_sub <- results_d7_ARG_MGE_phage_sub$P
+ns_d7_ARG_MGE_phage_sub <- results_d7_ARG_MGE_phage_sub$n
+# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff
+ps_melt_d7_ARG_MGE_phage_sub <- na.omit(melt(ps_d7_ARG_MGE_phage_sub))
+#creating a qvalue based on FDR
+ps_melt_d7_ARG_MGE_phage_sub$qval<-p.adjust(ps_melt_d7_ARG_MGE_phage_sub$value, method = "BH")
+#making column names more relevant
+
+names(ps_melt_d7_ARG_MGE_phage_sub)[3]<-"pval"
+# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here
+ps_sub_d7_ARG_MGE_phage_sub <- subset(ps_melt_d7_ARG_MGE_phage_sub, qval < q_cutoff)
+
+# now melting the rhos, note the similarity between ps_melt and rhos_melt
+rhos_melt_d7_ARG_MGE_phage_sub <- na.omit(melt(rhos_d7_ARG_MGE_phage_sub))
+names(rhos_melt_d7_ARG_MGE_phage_sub)[3]<-"rho"
+
+# now melting the ns
+ns_melt_d7_ARG_MGE_phage_sub <- (melt(ns_d7_ARG_MGE_phage_sub))
+names(ns_melt_d7_ARG_MGE_phage_sub)[3]<-"n"
+
+#merging together and remove negative rhos
+merged_d7_ARG_MGE_phage_sub<-merge(ps_sub_d7_ARG_MGE_phage_sub,rhos_melt_d7_ARG_MGE_phage_sub,by=c("Var1","Var2"))
+merged_d7_ARG_MGE_phage_sub<-merge(merged_d7_ARG_MGE_phage_sub,ns_melt_d7_ARG_MGE_phage_sub,by=c("Var1","Var2"))
+
+merged_d7_ARG_MGE_phage_sub<-subset(merged_d7_ARG_MGE_phage_sub, rho >= 0.8)
+
+merged_d7_ARG_MGE_phage_sub2 <- left_join(merged_d7_ARG_MGE_phage_sub, rgi_gff2, by = c("Var1"="gene_name"))
+merged_d7_ARG_MGE_phage_sub2 <- left_join(merged_d7_ARG_MGE_phage_sub2, rgi_gff2, by = c("Var2"="gene_name2"))
+
+merged_d7_ARG_MGE_phage_sub2$AMR_name.x <- merged_d7_ARG_MGE_phage_sub2$AMR_name.x %>% replace_na('MGE')
+merged_d7_ARG_MGE_phage_sub2$AMR_name.y <- merged_d7_ARG_MGE_phage_sub2$AMR_name.y %>% replace_na('MGE')
+merged_d7_ARG_MGE_phage_sub3 <- merged_d7_ARG_MGE_phage_sub2 %>%
+  select(Var1, Var2, pval:AMR_family.y) %>%
+  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")
+
+write.csv(merged_d7_ARG_MGE_phage_sub3, "r_output2/Phage/d7_sub_phage_co-occurence.csv", row.names = F)
+
+#co-occurrence d7 phage therapaeutic
+d7_ARG_MGE_phage_ther <- d7_ARG_MGE_phage_ther[,-1]
+
+results_d7_ARG_MGE_phage_ther <- rcorr(as.matrix(d7_ARG_MGE_phage_ther), type = c("spearman"))
+
+#corrplot(results_d7_ARG_MGE_conj_ther)
+
+#make two seperate objects for p-value and correlation coefficients
+rhos_d7_ARG_MGE_phage_ther <- results_d7_ARG_MGE_phage_ther$r
+ps_d7_ARG_MGE_phage_ther <- results_d7_ARG_MGE_phage_ther$P
+ns_d7_ARG_MGE_phage_ther <- results_d7_ARG_MGE_phage_ther$n
+# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff
+ps_melt_d7_ARG_MGE_phage_ther<-na.omit(melt(ps_d7_ARG_MGE_phage_ther))
+#creating a qvalue based on FDR
+ps_melt_d7_ARG_MGE_phage_ther$qval<-p.adjust(ps_melt_d7_ARG_MGE_phage_ther$value, method = "BH")
+#making column names more relevant
+
+names(ps_melt_d7_ARG_MGE_phage_ther)[3]<-"pval"
+# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here
+ps_sub_d7_ARG_MGE_phage_ther<-subset(ps_melt_d7_ARG_MGE_phage_ther, qval < q_cutoff)
+
+# now melting the rhos, note the similarity between ps_melt and rhos_melt
+rhos_melt_d7_ARG_MGE_phage_ther <- na.omit(melt(rhos_d7_ARG_MGE_phage_ther))
+names(rhos_melt_d7_ARG_MGE_phage_ther)[3]<-"rho"
+
+# now melting the ns
+ns_melt_d7_ARG_MGE_phage_ther <- (melt(ns_d7_ARG_MGE_phage_ther))
+names(ns_melt_d7_ARG_MGE_phage_ther)[3]<-"n"
+
+#merging together and remove negative rhos
+merged_d7_ARG_MGE_phage_ther<-merge(ps_sub_d7_ARG_MGE_phage_ther,rhos_melt_d7_ARG_MGE_phage_ther,by=c("Var1","Var2"))
+merged_d7_ARG_MGE_phage_ther<-merge(merged_d7_ARG_MGE_phage_ther,ns_melt_d7_ARG_MGE_phage_ther,by=c("Var1","Var2"))
+
+merged_d7_ARG_MGE_phage_ther<-subset(merged_d7_ARG_MGE_phage_ther, rho >= 0.8)
+
+merged_d7_ARG_MGE_phage_ther2 <- left_join(merged_d7_ARG_MGE_phage_ther, rgi_gff2, by = c("Var1"="gene_name"))
+merged_d7_ARG_MGE_phage_ther2 <- left_join(merged_d7_ARG_MGE_phage_ther2, rgi_gff2, by = c("Var2"="gene_name2"))
+
+merged_d7_ARG_MGE_phage_ther2$AMR_name.x <- merged_d7_ARG_MGE_phage_ther2$AMR_name.x %>% replace_na('MGE')
+merged_d7_ARG_MGE_phage_ther2$AMR_name.y <- merged_d7_ARG_MGE_phage_ther2$AMR_name.y %>% replace_na('MGE')
+merged_d7_ARG_MGE_phage_ther3 <- merged_d7_ARG_MGE_phage_ther2 %>%
+  select(Var1, Var2, pval:AMR_family.y) %>%
+  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")
+
+write.csv(merged_d7_ARG_MGE_phage_ther3, "r_output2/Phage/d7_ther_phage_co-occurence.csv", row.names = F)
+
+#co-occurrence d35 conjugation control
+d35_ARG_MGE_phage_ctrl <- d35_ARG_MGE_phage_ctrl[,-1]
+
+results_d35_ARG_MGE_phage_ctrl <- rcorr(as.matrix(d35_ARG_MGE_phage_ctrl), type = c("spearman"))
+
+#corrplot(results_d35_ARG_MGE_phage_ctrl)
+
+#make two separate objects for p-value and correlation coefficients
+rhos_d35_ARG_MGE_phage_ctrl <- results_d35_ARG_MGE_phage_ctrl$r
+ps_d35_ARG_MGE_phage_ctrl <- results_d35_ARG_MGE_phage_ctrl$P
+ns_d35_ARG_MGE_phage_ctrl <- results_d35_ARG_MGE_phage_ctrl$n
+# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff
+ps_melt_d35_ARG_MGE_phage_ctrl<-na.omit(melt(ps_d35_ARG_MGE_phage_ctrl))
+#creating a qvalue based on FDR
+ps_melt_d35_ARG_MGE_phage_ctrl$qval<-p.adjust(ps_melt_d35_ARG_MGE_phage_ctrl$value, method = "BH")
+#making column names more relevant
+
+names(ps_melt_d35_ARG_MGE_phage_ctrl)[3]<-"pval"
+# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here
+ps_sub_d35_ARG_MGE_phage_ctrl<-subset(ps_melt_d35_ARG_MGE_phage_ctrl, qval < q_cutoff)
+
+# now melting the rhos, note the similarity between ps_melt and rhos_melt
+rhos_melt_d35_ARG_MGE_phage_ctrl <- na.omit(melt(rhos_d35_ARG_MGE_phage_ctrl))
+names(rhos_melt_d35_ARG_MGE_phage_ctrl)[3]<-"rho"
+
+# now melting the ns
+ns_melt_d35_ARG_MGE_phage_ctrl <- (melt(ns_d35_ARG_MGE_phage_ctrl))
+names(ns_melt_d35_ARG_MGE_phage_ctrl)[3]<-"n"
+
+#merging together and remove negative rhos
+merged_d35_ARG_MGE_phage_ctrl<-merge(ps_sub_d35_ARG_MGE_phage_ctrl,rhos_melt_d35_ARG_MGE_phage_ctrl,by=c("Var1","Var2"))
+merged_d35_ARG_MGE_phage_ctrl<-merge(merged_d35_ARG_MGE_phage_ctrl,ns_melt_d35_ARG_MGE_phage_ctrl,by=c("Var1","Var2"))
+
+merged_d35_ARG_MGE_phage_ctrl<-subset(merged_d35_ARG_MGE_phage_ctrl, rho >= 0.8)
+
+merged_d35_ARG_MGE_phage_ctrl2 <- left_join(merged_d35_ARG_MGE_phage_ctrl, rgi_gff2, by = c("Var1"="gene_name"))
+merged_d35_ARG_MGE_phage_ctrl2 <- left_join(merged_d35_ARG_MGE_phage_ctrl2, rgi_gff2, by = c("Var2"="gene_name2"))
+
+merged_d35_ARG_MGE_phage_ctrl2$AMR_name.x <- merged_d35_ARG_MGE_phage_ctrl2$AMR_name.x %>% replace_na('MGE')
+merged_d35_ARG_MGE_phage_ctrl2$AMR_name.y <- merged_d35_ARG_MGE_phage_ctrl2$AMR_name.y %>% replace_na('MGE')
+merged_d35_ARG_MGE_phage_ctrl3 <- merged_d35_ARG_MGE_phage_ctrl2 %>%
+  select(Var1, Var2, pval:AMR_family.y) %>%
+  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")
+
+write.csv(merged_d35_ARG_MGE_phage_ctrl3, "r_output2/Phage/d35_ctrl_phage_co-occurence.csv", row.names = F)
+
+#co-occurrence d35 phage subtherapeautic
+d35_ARG_MGE_phage_sub <- d35_ARG_MGE_phage_sub[,-1]
+
+results_d35_ARG_MGE_phage_sub <- rcorr(as.matrix(d35_ARG_MGE_phage_sub), type = c("spearman"))
+
+#corrplot(results_d7_ARG_MGE_phage_ctrl)
+
+#make two seperate objects for p-value and correlation coefficients
+rhos_d35_ARG_MGE_phage_sub <- results_d35_ARG_MGE_phage_sub$r
+ps_d35_ARG_MGE_phage_sub <- results_d35_ARG_MGE_phage_sub$P
+ns_d35_ARG_MGE_phage_sub <- results_d35_ARG_MGE_phage_sub$n
+# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff
+ps_melt_d35_ARG_MGE_phage_sub<-na.omit(melt(ps_d35_ARG_MGE_phage_sub))
+#creating a qvalue based on FDR
+ps_melt_d35_ARG_MGE_phage_sub$qval<-p.adjust(ps_melt_d35_ARG_MGE_phage_sub$value, method = "BH")
+#making column names more relevant
+
+names(ps_melt_d35_ARG_MGE_phage_sub)[3]<-"pval"
+# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here
+ps_sub_d35_ARG_MGE_phage_sub<-subset(ps_melt_d35_ARG_MGE_phage_sub, qval < q_cutoff)
+
+# now melting the rhos, note the similarity between ps_melt and rhos_melt
+rhos_melt_d35_ARG_MGE_phage_sub <- na.omit(melt(rhos_d35_ARG_MGE_phage_sub))
+names(rhos_melt_d35_ARG_MGE_phage_sub)[3]<-"rho"
+
+# now melting the ns
+ns_melt_d35_ARG_MGE_phage_sub <- (melt(ns_d35_ARG_MGE_phage_sub))
+names(ns_melt_d35_ARG_MGE_phage_sub)[3]<-"n"
+
+#merging together and remove negative rhos
+merged_d35_ARG_MGE_phage_sub<-merge(ps_sub_d35_ARG_MGE_phage_sub,rhos_melt_d35_ARG_MGE_phage_sub,by=c("Var1","Var2"))
+merged_d35_ARG_MGE_phage_sub<-merge(merged_d35_ARG_MGE_phage_sub,ns_melt_d35_ARG_MGE_phage_sub,by=c("Var1","Var2"))
+
+merged_d35_ARG_MGE_phage_sub<-subset(merged_d35_ARG_MGE_phage_sub, rho >= 0.8)
+
+merged_d35_ARG_MGE_phage_sub2 <- left_join(merged_d35_ARG_MGE_phage_sub, rgi_gff2, by = c("Var1"="gene_name"))
+merged_d35_ARG_MGE_phage_sub2 <- left_join(merged_d35_ARG_MGE_phage_sub2, rgi_gff2, by = c("Var2"="gene_name2"))
+
+merged_d35_ARG_MGE_phage_sub2$AMR_name.x <- merged_d35_ARG_MGE_phage_sub2$AMR_name.x %>% replace_na('MGE')
+merged_d35_ARG_MGE_phage_sub2$AMR_name.y <- merged_d35_ARG_MGE_phage_sub2$AMR_name.y %>% replace_na('MGE')
+merged_d35_ARG_MGE_phage_sub3 <- merged_d35_ARG_MGE_phage_sub2 %>%
+  select(Var1, Var2, pval:AMR_family.y) %>%
+  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")
+
+write.csv(merged_d35_ARG_MGE_phage_sub3, "r_output2/Phage/d35_sub_phage_co-occurence.csv", row.names = F)
+
+#co-occurrence d35 phage therapeutic
+d35_ARG_MGE_phage_ther <- d35_ARG_MGE_phage_ther[,-1]
+
+results_d35_ARG_MGE_phage_ther <- rcorr(as.matrix(d35_ARG_MGE_phage_ther), type = c("spearman"))
+
+#corrplot(results_d35_ARG_MGE_phage_ther)
+
+#make two seperate objects for p-value and correlation coefficients
+rhos_d35_ARG_MGE_phage_ther <- results_d35_ARG_MGE_phage_ther$r
+ps_d35_ARG_MGE_phage_ther <- results_d35_ARG_MGE_phage_ther$P
+ns_d35_ARG_MGE_phage_ther <- results_d35_ARG_MGE_phage_ther$n
+# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff
+ps_melt_d35_ARG_MGE_phage_ther<-na.omit(melt(ps_d35_ARG_MGE_phage_ther))
+#creating a qvalue based on FDR
+ps_melt_d35_ARG_MGE_phage_ther$qval<-p.adjust(ps_melt_d35_ARG_MGE_phage_ther$value, method = "BH")
+#making column names more relevant
+
+names(ps_melt_d35_ARG_MGE_phage_ther)[3]<-"pval"
+# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here
+ps_sub_d35_ARG_MGE_phage_ther<-subset(ps_melt_d35_ARG_MGE_phage_ther, qval < q_cutoff)
+
+# now melting the rhos, note the similarity between ps_melt and rhos_melt
+rhos_melt_d35_ARG_MGE_phage_ther <- na.omit(melt(rhos_d35_ARG_MGE_phage_ther))
+names(rhos_melt_d35_ARG_MGE_phage_ther)[3]<-"rho"
+
+# now melting the ns
+ns_melt_d35_ARG_MGE_phage_ther <- (melt(ns_d35_ARG_MGE_phage_ther))
+names(ns_melt_d35_ARG_MGE_phage_ther)[3]<-"n"
+
+#merging together and remove negative rhos
+merged_d35_ARG_MGE_phage_ther<-merge(ps_sub_d35_ARG_MGE_phage_ther,rhos_melt_d35_ARG_MGE_phage_ther,by=c("Var1","Var2"))
+merged_d35_ARG_MGE_phage_ther<-merge(merged_d35_ARG_MGE_phage_ther,ns_melt_d35_ARG_MGE_phage_ther,by=c("Var1","Var2"))
+
+merged_d35_ARG_MGE_phage_ther<-subset(merged_d35_ARG_MGE_phage_ther, rho >= 0.8)
+
+merged_d35_ARG_MGE_phage_ther2 <- left_join(merged_d35_ARG_MGE_phage_ther, rgi_gff2, by = c("Var1"="gene_name"))
+merged_d35_ARG_MGE_phage_ther2 <- left_join(merged_d35_ARG_MGE_phage_ther2, rgi_gff2, by = c("Var2"="gene_name2"))
+
+merged_d35_ARG_MGE_phage_ther2$AMR_name.x <- merged_d35_ARG_MGE_phage_ther2$AMR_name.x %>% replace_na('MGE')
+merged_d35_ARG_MGE_phage_ther2$AMR_name.y <- merged_d35_ARG_MGE_phage_ther2$AMR_name.y %>% replace_na('MGE')
+merged_d35_ARG_MGE_phage_ther3 <- merged_d35_ARG_MGE_phage_ther2 %>%
+  select(Var1, Var2, pval:AMR_family.y) %>%
+  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")
+
+write.csv(merged_d35_ARG_MGE_phage_ther3, "r_output2/Phage/d35_ther_phage_co-occurence.csv", row.names = F)
+
+#co-occurence d78 phage control
+d78_ARG_MGE_phage_ctrl <- d78_ARG_MGE_phage_ctrl[,-1]
+
+results_d78_ARG_MGE_phage_ctrl <- rcorr(as.matrix(d78_ARG_MGE_phage_ctrl), type = c("spearman"))
+
+#corrplot(results_d78_ARG_MGE_phage_ctrl)
+
+#make two seperate objects for p-value and correlation coefficients
+rhos_d78_ARG_MGE_phage_ctrl <- results_d78_ARG_MGE_phage_ctrl$r
+ps_d78_ARG_MGE_phage_ctrl <- results_d78_ARG_MGE_phage_ctrl$P
+ns_d78_ARG_MGE_phage_ctrl <- results_d78_ARG_MGE_phage_ctrl$n
+# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff
+ps_melt_d78_ARG_MGE_phage_ctrl<-na.omit(melt(ps_d78_ARG_MGE_phage_ctrl))
+#creating a qvalue based on FDR
+ps_melt_d78_ARG_MGE_phage_ctrl$qval<-p.adjust(ps_melt_d78_ARG_MGE_phage_ctrl$value, method = "BH")
+#making column names more relevant
+
+names(ps_melt_d78_ARG_MGE_phage_ctrl)[3]<-"pval"
+# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here
+ps_sub_d78_ARG_MGE_phage_ctrl<-subset(ps_melt_d78_ARG_MGE_phage_ctrl, qval < q_cutoff)
+
+# now melting the rhos, note the similarity between ps_melt and rhos_melt
+rhos_melt_d78_ARG_MGE_phage_ctrl <- na.omit(melt(rhos_d78_ARG_MGE_phage_ctrl))
+names(rhos_melt_d78_ARG_MGE_phage_ctrl)[3]<-"rho"
+
+# now melting the ns
+ns_melt_d78_ARG_MGE_phage_ctrl <- (melt(ns_d78_ARG_MGE_phage_ctrl))
+names(ns_melt_d78_ARG_MGE_phage_ctrl)[3]<-"n"
+
+#merging together and remove negative rhos
+merged_d78_ARG_MGE_phage_ctrl<-merge(ps_sub_d78_ARG_MGE_phage_ctrl,rhos_melt_d78_ARG_MGE_phage_ctrl,by=c("Var1","Var2"))
+merged_d78_ARG_MGE_phage_ctrl<-merge(merged_d78_ARG_MGE_phage_ctrl,ns_melt_d78_ARG_MGE_phage_ctrl,by=c("Var1","Var2"))
+
+merged_d78_ARG_MGE_phage_ctrl<-subset(merged_d78_ARG_MGE_phage_ctrl, rho >= 0.8)
+
+merged_d78_ARG_MGE_phage_ctrl2 <- left_join(merged_d78_ARG_MGE_phage_ctrl, rgi_gff2, by = c("Var1"="gene_name"))
+merged_d78_ARG_MGE_phage_ctrl2 <- left_join(merged_d78_ARG_MGE_phage_ctrl2, rgi_gff2, by = c("Var2"="gene_name2"))
+
+merged_d78_ARG_MGE_phage_ctrl2$AMR_name.x <- merged_d78_ARG_MGE_phage_ctrl2$AMR_name.x %>% replace_na('MGE')
+merged_d78_ARG_MGE_phage_ctrl2$AMR_name.y <- merged_d78_ARG_MGE_phage_ctrl2$AMR_name.y %>% replace_na('MGE')
+merged_d78_ARG_MGE_phage_ctrl3 <- merged_d78_ARG_MGE_phage_ctrl2 %>%
+  select(Var1, Var2, pval:AMR_family.y) %>%
+  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")
+
+write.csv(merged_d78_ARG_MGE_phage_ctrl3, "r_output2/Phage/d78_ctrl_phage_co-occurence.csv", row.names = F)
+
+#co-occurence d78 phage subtherapeutic
+d78_ARG_MGE_phage_sub <- d78_ARG_MGE_phage_sub[,-1]
+
+results_d78_ARG_MGE_phage_sub <- rcorr(as.matrix(d78_ARG_MGE_phage_sub), type = c("spearman"))
+
+#corrplot(results_d78_ARG_MGE_conj_sub)
+
+#make two seperate objects for p-value and correlation coefficients
+rhos_d78_ARG_MGE_phage_sub <- results_d78_ARG_MGE_phage_sub$r
+ps_d78_ARG_MGE_phage_sub <- results_d78_ARG_MGE_phage_sub$P
+ns_d78_ARG_MGE_phage_sub <- results_d78_ARG_MGE_phage_sub$n
+# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff
+ps_melt_d78_ARG_MGE_phage_sub<-na.omit(melt(ps_d78_ARG_MGE_phage_sub))
+#creating a qvalue based on FDR
+ps_melt_d78_ARG_MGE_phage_sub$qval<-p.adjust(ps_melt_d78_ARG_MGE_phage_sub$value, method = "BH")
+#making column names more relevant
+
+names(ps_melt_d78_ARG_MGE_phage_sub)[3]<-"pval"
+# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here
+ps_sub_d78_ARG_MGE_phage_sub<-subset(ps_melt_d78_ARG_MGE_phage_sub, qval < q_cutoff)
+
+# now melting the rhos, note the similarity between ps_melt and rhos_melt
+rhos_melt_d78_ARG_MGE_phage_sub <- na.omit(melt(rhos_d78_ARG_MGE_phage_sub))
+names(rhos_melt_d78_ARG_MGE_phage_sub)[3]<-"rho"
+
+# now melting the ns
+ns_melt_d78_ARG_MGE_phage_sub <- (melt(ns_d78_ARG_MGE_phage_sub))
+names(ns_melt_d78_ARG_MGE_phage_sub)[3]<-"n"
+
+#merging together and remove negative rhos
+merged_d78_ARG_MGE_phage_sub<-merge(ps_sub_d78_ARG_MGE_phage_sub,rhos_melt_d78_ARG_MGE_phage_sub,by=c("Var1","Var2"))
+merged_d78_ARG_MGE_phage_sub<-merge(merged_d78_ARG_MGE_phage_sub,ns_melt_d78_ARG_MGE_phage_sub,by=c("Var1","Var2"))
+
+merged_d78_ARG_MGE_phage_sub<-subset(merged_d78_ARG_MGE_phage_sub, rho >= 0.8)
+
+merged_d78_ARG_MGE_phage_sub2 <- left_join(merged_d78_ARG_MGE_phage_sub, rgi_gff2, by = c("Var1"="gene_name"))
+merged_d78_ARG_MGE_phage_sub2 <- left_join(merged_d78_ARG_MGE_phage_sub2, rgi_gff2, by = c("Var2"="gene_name2"))
+
+merged_d78_ARG_MGE_phage_sub2$AMR_name.x <- merged_d78_ARG_MGE_phage_sub2$AMR_name.x %>% replace_na('MGE')
+merged_d78_ARG_MGE_phage_sub2$AMR_name.y <- merged_d78_ARG_MGE_phage_sub2$AMR_name.y %>% replace_na('MGE')
+merged_d78_ARG_MGE_phage_sub3 <- merged_d78_ARG_MGE_phage_sub2 %>%
+  select(Var1, Var2, pval:AMR_family.y) %>%
+  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")
+
+write.csv(merged_d78_ARG_MGE_phage_sub3, "r_output2/Phage/d78_sub_phage_co-occurence.csv", row.names = F)
+
+#co-occurence d78 phage therapeutic
+d78_ARG_MGE_phage_ther <- d78_ARG_MGE_phage_ther[,-1]
+
+results_d78_ARG_MGE_phage_ther <- rcorr(as.matrix(d78_ARG_MGE_phage_ther), type = c("spearman"))
+
+#corrplot(results_d78_ARG_MGE_phage_ther)
+
+#make two seperate objects for p-value and correlation coefficients
+rhos_d78_ARG_MGE_phage_ther <- results_d78_ARG_MGE_phage_ther$r
+ps_d78_ARG_MGE_phage_ther <- results_d78_ARG_MGE_phage_ther$P
+ns_d78_ARG_MGE_phage_ther <- results_d78_ARG_MGE_phage_ther$n
+# going to melt these objects to 'long form' where the first two columns make up the pairs of OTUs, I am also removing NA's as they are self-comparisons, not enough data, other bad stuff
+ps_melt_d78_ARG_MGE_phage_ther<-na.omit(melt(ps_d78_ARG_MGE_phage_ther))
+#creating a qvalue based on FDR
+ps_melt_d78_ARG_MGE_phage_ther$qval<-p.adjust(ps_melt_d78_ARG_MGE_phage_ther$value, method = "BH")
+#making column names more relevant
+
+names(ps_melt_d78_ARG_MGE_phage_ther)[3]<-"pval"
+# if you are of the opinion that it is a good idea to subset your network based on adjusted P-values (qval in this case), you can then subset here
+ps_sub_d78_ARG_MGE_phage_ther<-subset(ps_melt_d78_ARG_MGE_phage_ther, qval < q_cutoff)
+
+# now melting the rhos, note the similarity between ps_melt and rhos_melt
+rhos_melt_d78_ARG_MGE_phage_ther <- na.omit(melt(rhos_d78_ARG_MGE_phage_ther))
+names(rhos_melt_d78_ARG_MGE_phage_ther)[3]<-"rho"
+
+# now melting the ns
+ns_melt_d78_ARG_MGE_phage_ther <- (melt(ns_d78_ARG_MGE_phage_ther))
+names(ns_melt_d78_ARG_MGE_phage_ther)[3]<-"n"
+
+#merging together and remove negative rhos
+merged_d78_ARG_MGE_phage_ther<-merge(ps_sub_d78_ARG_MGE_phage_ther,rhos_melt_d78_ARG_MGE_phage_ther,by=c("Var1","Var2"))
+merged_d78_ARG_MGE_phage_ther<-merge(merged_d78_ARG_MGE_phage_ther,ns_melt_d78_ARG_MGE_phage_ther,by=c("Var1","Var2"))
+
+merged_d78_ARG_MGE_phage_ther<-subset(merged_d78_ARG_MGE_phage_ther, rho >= 0.8)
+
+merged_d78_ARG_MGE_phage_ther2 <- left_join(merged_d78_ARG_MGE_phage_ther, rgi_gff2, by = c("Var1"="gene_name"))
+merged_d78_ARG_MGE_phage_ther2 <- left_join(merged_d78_ARG_MGE_phage_ther2, rgi_gff2, by = c("Var2"="gene_name2"))
+
+merged_d78_ARG_MGE_phage_ther2$AMR_name.x <- merged_d78_ARG_MGE_phage_ther2$AMR_name.x %>% replace_na('MGE')
+merged_d78_ARG_MGE_phage_ther2$AMR_name.y <- merged_d78_ARG_MGE_phage_ther2$AMR_name.y %>% replace_na('MGE')
+merged_d78_ARG_MGE_phage_ther3 <- merged_d78_ARG_MGE_phage_ther2 %>%
+  select(Var1, Var2, pval:AMR_family.y) %>%
+  filter(AMR_name.x=="MGE", AMR_name.y!= "MGE")
+
+write.csv(merged_d78_ARG_MGE_phage_ther3, "r_output2/Phage/d78_ther_phage_co-occurence.csv", row.names = F)

@@ -1,3412 +1,807 @@
-{\rtf1\ansi\ansicpg1252\cocoartf2709
-\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fmodern\fcharset0 Courier-Bold;\f2\fmodern\fcharset0 Courier;
-\f3\fmodern\fcharset0 Courier-Oblique;}
-{\colortbl;\red255\green255\blue255;\red133\green0\blue2;\red242\green242\blue242;\red38\green38\blue38;
-\red123\green71\blue5;\red64\green140\blue9;\red25\green55\blue116;\red0\green0\blue196;\red193\green71\blue5;
-\red232\green14\blue32;\red210\green0\blue53;\red17\green137\blue135;\red135\green136\blue117;\red133\green0\blue96;
-}
-{\*\expandedcolortbl;;\cssrgb\c60000\c0\c0;\cssrgb\c96078\c96078\c96078;\cssrgb\c20000\c20000\c20000;
-\cssrgb\c56078\c34902\c784;\cssrgb\c30588\c60392\c2353;\cssrgb\c12549\c29020\c52941;\cssrgb\c0\c0\c81176;\cssrgb\c80784\c36078\c0;
-\cssrgb\c93725\c16078\c16078;\cssrgb\c86667\c6667\c26667;\cssrgb\c0\c60000\c60000;\cssrgb\c60000\c60000\c53333;\cssrgb\c60000\c0\c45098;
-}
-\margl1440\margr1440\vieww11520\viewh8400\viewkind0
-\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
-
-\f0\fs24 \cf0 \
-\
-\pard\pardeftab720\partightenfactor0
-
-\f1\b\fs26 \cf2 \cb3 \expnd0\expndtw0\kerning0
-library
-\f2\b0 \cf4 (tidyverse)\
-
-\f1\b \cf2 library
-\f2\b0 \cf4 (broom)\
-
-\f1\b \cf2 library
-\f2\b0 \cf4 (lme4)\
-
-\f1\b \cf2 library
-\f2\b0 \cf4 (lmerTest)\
-
-\f1\b \cf2 library
-\f2\b0 \cf4 (emmeans)\
-\
-\
-\
-\pard\pardeftab720\partightenfactor0
-
-\f3\i \cf5 \cb3 #  CheckM bin info  #
-\f2\i0 \cf4 \cb3 \
-colnams <-\cf6 \cb3  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'bin'\cf4 \cb3 , \cf6 \cb3 'marker_lineage'\cf4 \cb3 , \cf6 \cb3 'num_genomes'\cf4 \cb3 , \cf6 \cb3 'num_markers'\cf4 \cb3 , \cf6 \cb3 'num_marker_sets'\cf4 \cb3 , \cf6 \cb3 'x0'\cf4 \cb3 , \cf6 \cb3 'x1'\cf4 \cb3 , \cf6 \cb3 'x2'\cf4 \cb3 , \cf6 \cb3 'x3'\cf4 \cb3 ,\cf6 \cb3 'x4'\cf4 \cb3 ,\cf6 \cb3 'x5+'\cf4 \cb3 , \cf6 \cb3 'Completeness'\cf4 \cb3 , \cf6 \cb3 'Contamination'\cf4 \cb3 , \cf6 \cb3 'Strain_heterogeneity'\cf4 \cb3 )\
-\
-checkm <-\cf6 \cb3  
-\f1\b \cf7 read_delim
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'CheckM_clean3.txt'\cf4 \cb3 , \cf7 \cb3 delim =\cf4 \cb3  \cf6 \cb3 '\\t'\cf4 \cb3 , \cf7 \cb3 trim_ws =\cf4 \cb3  \cf5 \cb3 TRUE\cf4 \cb3 , \cf7 \cb3 skip =\cf4 \cb3  \cf8 \cb3 2\cf4 \cb3 , \cf7 \cb3 col_names =\cf4 \cb3  colnams) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 bin=
-\f1\b sub
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '_new'\cf4 \cb3 , \cf6 \cb3 ''\cf4 \cb3 , bin)) \
-\
-\
-\
-
-\f3\i \cf5 \cb3 # read in the data and extract some metadata from sample names
-\f2\i0 \cf4 \cb3 \
-dat <-\cf6 \cb3  
-\f1\b \cf7 read_tsv
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'ALL_RESULTS_BULK_MAP.txt'\cf4 \cb3 , \cf7 \cb3 skip =\cf4 \cb3  \cf8 \cb3 1\cf4 \cb3 , \cf7 \cb3 col_types =\cf4 \cb3  
-\f1\b \cf7 \cb3 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iccnnnnnnninn'\cf4 \cb3 ))
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 sample =\cf4 \cb3  
-\f1\b \cf7 \cb3 sub
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '_mapped.sam'\cf4 \cb3 ,\cf6 \cb3 ''\cf4 \cb3 ,sample),\
-         \cf7 \cb3 genome =\cf4 \cb3  
-\f1\b \cf7 \cb3 sub
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '.fa'\cf4 \cb3 ,\cf6 \cb3 ''\cf4 \cb3 ,genome),\
-         \cf7 \cb3 day =\cf4 \cb3  
-\f1\b \cf7 \cb3 sub
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'd([0-9][0-9])([a-z]+)([0-9][0-9][0-9])'\cf4 \cb3 ,\cf6 \cb3 '\\\\1'\cf4 \cb3 ,sample), \
-         \cf7 \cb3 treatment =\cf4 \cb3  
-\f1\b \cf7 \cb3 sub
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'd([0-9][0-9])([a-z]+)([0-9][0-9][0-9])'\cf4 \cb3 ,\cf6 \cb3 '\\\\2'\cf4 \cb3 ,sample), \
-         \cf7 \cb3 bird =\cf4 \cb3  
-\f1\b \cf7 \cb3 sub
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'd([0-9][0-9])([a-z]+)([0-9][0-9][0-9])'\cf4 \cb3 ,\cf6 \cb3 '\\\\3'\cf4 \cb3 ,sample), \
-         \cf7 \cb3 day_num =\cf4 \cb3  
-\f1\b \cf7 \cb3 as.numeric
-\f2\b0 \cf4 \cb3 (day))  
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 !
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 is.na
-\f2\b0 \cf4 \cb3 (iRep))) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 !\cf7 grepl
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'ex'\cf4 \cb3 , sample)) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 X1, 
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf6 `\cf7 fragments/Mbp\cf6 `\cf4 \cb3 )\
-\
-\
-dat <-\cf6 \cb3  \cf4 \cb3 dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (coverage 
-\f1\b \cf9 \cb3 >
-\f2\b0 \cf6  \cf8 5\cf4 \cb3 )  
-\f3\i \cf5 \cb3 # only keep estimates from samples where bins had > 5x coverage (as reccommended)
-\f2\i0 \cf4 \cb3 \
-\
-
-\f3\i \cf5 \cb3 # Histogram of all iRep estimates
-\f2\i0 \cf4 \cb3 \
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 iRep)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_histogram
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 bins =\cf4 \cb3  \cf8 \cb3 50\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'Histogram of all valid iRep estimates'\cf4 \cb3 )\
-\
-\
-
-\f3\i \cf5 \cb3 # some bins have extremely high coverage / relative abundance
-\f2\i0 \cf4 \cb3 \
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 (coverage))) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_histogram
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 bins =\cf4 \cb3  \cf8 \cb3 100\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'Histogram of bin coverages'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 ()\
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=
-\f1\b log2
-\f2\b0 \cf4 \cb3 (coverage))) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_histogram
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 bins =\cf4 \cb3  \cf8 \cb3 100\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'Histogram of log(coverage)'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 ()\
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf6 `\cf7 relative abundance\cf6 `\cf4 \cb3 )) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_histogram
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 bins =\cf4 \cb3  \cf8 \cb3 100\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'Histogram of relative_abundance'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 ()\
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 (
-\f1\b \cf7 \cb3 log2
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 `\cf7 relative abundance\cf6 `\cf4 \cb3 )))) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_histogram
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 bins =\cf4 \cb3  \cf8 \cb3 100\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'Histogram of log(relative_abundance)'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 ()\
-\
-
-\f3\i \cf5 \cb3 #### iRep is significantly negatively correlated with both coverage and relative abundance
-\f2\i0 \cf4 \cb3 \
-\
-
-\f1\b \cf7 \cb3 cor.test
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x =\cf4 \cb3  dat
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 iRep, 
-\f1\b \cf7 \cb3 log
-\f2\b0 \cf4 \cb3 (dat
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf6 `\cf7 relative abundance\cf6 `\cf4 \cb3 ))\
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=
-\f1\b log
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 `\cf7 relative abundance\cf6 `\cf4 \cb3 ), \cf7 \cb3 y=\cf4 \cb3 iRep)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_point
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_smooth
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 method =\cf4 \cb3  \cf6 \cb3 'lm'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 ()\
-\
-
-\f3\i \cf5 \cb3 # what about testing this within each bin?
-\f2\i0 \cf4 \cb3 \
-\
-\
-valid_irep_totbin <-\cf6 \cb3  \cf4 \cb3 dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 group_by
-\f2\b0 \cf4 \cb3 (genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 tally
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 arrange
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 desc
-\f2\b0 \cf4 \cb3 (n))\
-\
-valid_irep_totbin 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 n)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_histogram
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 bins =\cf4 \cb3  \cf8 \cb3 50\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 xlab
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'number of valid iRep estimates'\cf4 \cb3 )
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'number of valid iRep estimates per bin'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 ()\
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 nrow
-\f2\b0 \cf4 \cb3 ()\
-\
-
-\f3\i \cf5 \cb3 # 2278 valid iRep estimates
-\f2\i0 \cf4 \cb3 \
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unlist
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unique
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 length
-\f2\b0 \cf4 \cb3 ()\
-\
-
-\f3\i \cf5 \cb3 # from 244 genomes
-\f2\i0 \cf4 \cb3 \
-\
-\
-
-\f3\i \cf5 \cb3 # How do these estimates look by treatment? by day?
-\f2\i0 \cf4 \cb3 \
-
-\f3\i \cf5 \cb3 # boxplots
-\f2\i0 \cf4 \cb3 \
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 treatment, \cf7 \cb3 y=\cf4 \cb3 iRep)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_boxplot
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 facet_wrap
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf4 \cb3 day) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 ()\
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 day, \cf7 \cb3 y=\cf4 \cb3 iRep)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_boxplot
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 facet_wrap
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf4 \cb3 treatment)
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 ()\
-\
-
-\f3\i \cf5 \cb3 ### neat, maybe a treatment effect? 
-\f2\i0 \cf4 \cb3 \
-
-\f3\i \cf5 \cb3 ### maybe a time effect? 
-\f2\i0 \cf4 \cb3 \
-\
-
-\f3\i \cf5 \cb3 ### But, we dont know if we are measuring the same genomes growth rates in each of these categories...
-\f2\i0 \cf4 \cb3 \
-\
-
-\f3\i \cf5 \cb3 #####  main point here is that the data are sparse #######
-\f2\i0 \cf4 \cb3 \
-\
-
-\f3\i \cf5 \cb3 # calculating which bins have enough datapoints available for meaningful stats
-\f2\i0 \cf4 \cb3 \
-\
-number_of_obs <-\cf6 \cb3  \cf4 \cb3 dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 group_by
-\f2\b0 \cf4 \cb3 (day, treatment, genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 tally
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 spread
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 key =\cf4 \cb3  treatment, \cf7 \cb3 value=\cf4 \cb3 n) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ungroup
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 group_by
-\f2\b0 \cf4 \cb3 (day, genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 num_NA =\cf4 \cb3  
-\f1\b \cf7 \cb3 sum
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 is.na
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 c
-\f2\b0 \cf4 \cb3 (ctrl, sub, ther))), \
-         \cf7 \cb3 num_w_4p =\cf4 \cb3  
-\f1\b \cf7 \cb3 sum
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 c
-\f2\b0 \cf4 \cb3 (ctrl, sub, ther) 
-\f1\b \cf9 \cb3 >
-\f2\b0 \cf8 3\cf4 \cb3 , \cf7 \cb3 na.rm =\cf4 \cb3  \cf5 \cb3 TRUE\cf4 \cb3 )) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ungroup
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 )\
-  \
-number_of_obs\
-\
-
-\f3\i \cf5 \cb3 # data grouped by bin and day to tally numobs per group
-\f2\i0 \cf4 \cb3 \
-\
-\
-
-\f3\i \cf5 \cb3 # These have at least 1 treatment group with 4+ observations at the given timepoint
-\f2\i0 \cf4 \cb3 \
-\
-one_group <-\cf6 \cb3  \cf4 \cb3 number_of_obs 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (num_w_4p 
-\f1\b \cf9 \cb3 >=
-\f2\b0 \cf6  \cf8 1\cf4 \cb3 )\
-one_group\
-\
-
-\f3\i \cf5 \cb3 #### These have at least 2 groups with 4+ observations
-\f2\i0 \cf4 \cb3 \
-two_groups <-\cf6 \cb3  \cf4 \cb3 number_of_obs 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (num_w_4p 
-\f1\b \cf9 \cb3 >
-\f2\b0 \cf6  \cf8 1\cf4 \cb3 )  \
-two_groups\
-\
-
-\f3\i \cf5 \cb3 # these have all 3 groups represented by at least 4 data points each
-\f2\i0 \cf4 \cb3 \
-all_groups <-\cf6 \cb3  \cf4 \cb3 number_of_obs 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (num_w_4p 
-\f1\b \cf9 \cb3 ==
-\f2\b0 \cf6  \cf8 3\cf4 \cb3 )\
-all_groups\
-\
-
-\f3\i \cf5 \cb3 # no bin has 4 or more observations in every group at every timepoint
-\f2\i0 \cf4 \cb3 \
-number_of_obs 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome, day, num_w_4p) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 spread
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 key =\cf4 \cb3  day, \cf7 \cb3 value =\cf4 \cb3  num_w_4p) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 all_times =\cf4 \cb3  \cf6 \cb3 `\cf7 07\cf6 `
-\f1\b \cf9 +
-\f2\b0 \cf6  `\cf7 35\cf6 `
-\f1\b \cf9 +
-\f2\b0 \cf6  `\cf7 78\cf6 `\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 arrange
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 desc
-\f2\b0 \cf4 \cb3 (all_times)) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 d7g =\cf4 \cb3  
-\f1\b \cf7 \cb3 ifelse
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 `\cf7 07\cf6 `\cf4 \cb3  
-\f1\b \cf9 \cb3 ==
-\f2\b0 \cf6  \cf8 3\cf4 \cb3 , \cf5 \cb3 TRUE\cf4 \cb3 , \cf5 \cb3 FALSE\cf4 \cb3 ), \
-         \cf7 \cb3 d35g =\cf4 \cb3  
-\f1\b \cf7 \cb3 ifelse
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 `\cf7 35\cf6 `\cf4 \cb3  
-\f1\b \cf9 \cb3 ==
-\f2\b0 \cf6  \cf8 3\cf4 \cb3 , \cf5 \cb3 TRUE\cf4 \cb3 , \cf5 \cb3 FALSE\cf4 \cb3 ),\
-         \cf7 \cb3 d78g =\cf4 \cb3  
-\f1\b \cf7 \cb3 ifelse
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 `\cf7 78\cf6 `\cf4 \cb3  
-\f1\b \cf9 \cb3 ==
-\f2\b0 \cf6  \cf8 3\cf4 \cb3 , \cf5 \cb3 TRUE\cf4 \cb3 , \cf5 \cb3 FALSE\cf4 \cb3 ))\
-\
-
-\f3\i \cf5 \cb3 # kindof makes sense, both ABX treatment and time affected the community composition
-\f2\i0 \cf4 \cb3 \
-
-\f3\i \cf5 \cb3 #
-\f2\i0 \cf4 \cb3 \
-
-\f3\i \cf5 \cb3 # Will probably have to stick to comparing iRep estimates in two main ways:
-\f2\i0 \cf4 \cb3 \
-
-\f3\i \cf5 \cb3 #  1) Within timepoint between treatments
-\f2\i0 \cf4 \cb3 \
-
-\f3\i \cf5 \cb3 #  2) within a treatment between timepoints
-\f2\i0 \cf4 \cb3 \
-\
-\
-
-\f3\i \cf5 \cb3 ## one timepoint ##
-\f2\i0 \cf4 \cb3 \
-\
-
-\f3\i \cf5 \cb3 # 8 bins have all treatment groups represented with 4+ observations at D7
-\f2\i0 \cf4 \cb3 \
-D7 <-\cf6 \cb3  \cf4 \cb3 all_groups 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome, day, num_w_4p) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 spread
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 key=\cf4 \cb3 day, \cf7 \cb3 value =\cf4 \cb3  num_w_4p) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 !\cf7 is.na
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 `\cf7 07\cf6 `\cf4 \cb3 ))\
-D7\
-\
-
-\f3\i \cf5 \cb3 # 11 bins have all treatment groups represented with 4+ observations at D35
-\f2\i0 \cf4 \cb3 \
-D35 <-\cf6 \cb3  \cf4 \cb3 all_groups 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome, day, num_w_4p) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 spread
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 key=\cf4 \cb3 day, \cf7 \cb3 value =\cf4 \cb3  num_w_4p) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 !\cf7 is.na
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 `\cf7 35\cf6 `\cf4 \cb3 ))\
-D35\
-\
-
-\f3\i \cf5 \cb3 # 8 bins have all treatment groups represented with 4+ observations at D78
-\f2\i0 \cf4 \cb3 \
-D78 <-\cf6 \cb3  \cf4 \cb3 all_groups 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome, day, num_w_4p) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 spread
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 key=\cf4 \cb3 day, \cf7 \cb3 value =\cf4 \cb3  num_w_4p) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 !\cf7 is.na
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 `\cf7 78\cf6 `\cf4 \cb3 ))\
-D78\
-\
-
-\f3\i \cf5 \cb3 ### 2 timepoints 
-\f2\i0 \cf10 \cb3 ###\cf4 \cb3 \
-\
-
-\f3\i \cf5 \cb3 # 4 bins have all 3 groups with 4+ observations at both d7 and d35
-\f2\i0 \cf4 \cb3 \
-all_groups 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome, day, num_w_4p) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 spread
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 key=\cf4 \cb3 day, \cf7 \cb3 value =\cf4 \cb3  num_w_4p) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 d7vd35 =\cf4 \cb3  \cf6 \cb3 `\cf7 07\cf6 `\cf4 \cb3  
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  `\cf7 35\cf6 `\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 !\cf7 is.na
-\f2\b0 \cf4 \cb3 (d7vd35))\
-\
-
-\f3\i \cf5 \cb3 # 1 bin has all 3 groups with 4+ observations at both d35 and d78
-\f2\i0 \cf4 \cb3 \
-all_groups 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome, day, num_w_4p) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 spread
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 key=\cf4 \cb3 day, \cf7 \cb3 value =\cf4 \cb3  num_w_4p) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 d35vd78 =\cf4 \cb3  \cf6 \cb3 `\cf7 35\cf6 `\cf4 \cb3  
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  `\cf7 78\cf6 `\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 !\cf7 is.na
-\f2\b0 \cf4 \cb3 (d35vd78))\
-\
-
-\f3\i \cf5 \cb3 # no bin has all 3 groups with 4+ observations at d7 and d78
-\f2\i0 \cf4 \cb3 \
-all_groups 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome, day, num_w_4p) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 spread
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 key=\cf4 \cb3 day, \cf7 \cb3 value =\cf4 \cb3  num_w_4p) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 d07vd78 =\cf4 \cb3  \cf6 \cb3 `\cf7 07\cf6 `\cf4 \cb3  
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  `\cf7 78\cf6 `\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 !\cf7 is.na
-\f2\b0 \cf4 \cb3 (d07vd78))\
-\
-
-\f3\i \cf5 \cb3 ##### These sets of bins can be used to investigate time effect #####
-\f2\i0 \cf4 \cb3 \
-
-\f3\i \cf5 \cb3 ##### within each treatment #####
-\f2\i0 \cf4 \cb3 \
-\
-
-\f3\i \cf5 \cb3 # these ones can compare d7 vs d35 in ctrl
-\f2\i0 \cf4 \cb3 \
-\
-
-\f3\i \cf5 \cb3 # 15 bins
-\f2\i0 \cf4 \cb3 \
-ctrl735 <-\cf6 \cb3  \cf4 \cb3 number_of_obs 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-
-\f3\i \cf5 \cb3 #  filter(num_w_4p >1) %>%
-\f2\i0 \cf4 \cb3 \
-
-\f3\i \cf5 \cb3 #  filter(ctrl >3) %>%
-\f2\i0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 bin_day, 
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 num_NA, 
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 num_w_4p) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 gather
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 key =\cf4 \cb3  \cf6 \cb3 'treat'\cf4 \cb3 , \cf7 \cb3 value =\cf4 \cb3  \cf6 \cb3 'count'\cf4 \cb3 , 
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 day, 
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col=\cf6 'treat_day'\cf4 \cb3 , treat, day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 spread
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 key=\cf4 \cb3 treat_day, \cf7 \cb3 value=\cf4 \cb3 count) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome, 
-\f1\b \cf7 \cb3 starts_with
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'ctrl'\cf4 \cb3 )) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (ctrl_\cf8 \cb3 07\cf4 \cb3  
-\f1\b \cf9 \cb3 >
-\f2\b0 \cf6  \cf8 3\cf4 \cb3  
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 ctrl_\cf8 \cb3 35\cf4 \cb3  
-\f1\b \cf9 \cb3 >
-\f2\b0 \cf6  \cf8 3\cf4 \cb3 )\
-ctrl735\
-\
-
-\f3\i \cf5 \cb3 # 8 bins
-\f2\i0 \cf4 \cb3 \
-sub735 <-\cf6 \cb3  \cf4 \cb3 number_of_obs 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f3\i \cf5 #  filter(num_w_4p >1) %>%
-\f2\i0 \cf4 \cb3 \
-\cf6 \cb3   
-\f3\i \cf5 #  filter(ctrl >3) %>%
-\f2\i0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 bin_day, 
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 num_NA, 
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 num_w_4p) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 gather
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 key =\cf4 \cb3  \cf6 \cb3 'treat'\cf4 \cb3 , \cf7 \cb3 value =\cf4 \cb3  \cf6 \cb3 'count'\cf4 \cb3 , 
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 day, 
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col=\cf6 'treat_day'\cf4 \cb3 , treat, day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 spread
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 key=\cf4 \cb3 treat_day, \cf7 \cb3 value=\cf4 \cb3 count) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome, 
-\f1\b \cf7 \cb3 starts_with
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'sub'\cf4 \cb3 )) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (sub_\cf8 \cb3 07\cf4 \cb3  
-\f1\b \cf9 \cb3 >
-\f2\b0 \cf6  \cf8 3\cf4 \cb3  
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 sub_\cf8 \cb3 35\cf4 \cb3  
-\f1\b \cf9 \cb3 >
-\f2\b0 \cf6  \cf8 3\cf4 \cb3 )\
-sub735\
-\
-
-\f3\i \cf5 \cb3 # 11 bins
-\f2\i0 \cf4 \cb3 \
-ther735 <-\cf6 \cb3  \cf4 \cb3 number_of_obs 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f3\i \cf5 #  filter(num_w_4p >1) %>%
-\f2\i0 \cf4 \cb3 \
-\cf6 \cb3   
-\f3\i \cf5 #  filter(ctrl >3) %>%
-\f2\i0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 bin_day, 
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 num_NA, 
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 num_w_4p) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 gather
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 key =\cf4 \cb3  \cf6 \cb3 'treat'\cf4 \cb3 , \cf7 \cb3 value =\cf4 \cb3  \cf6 \cb3 'count'\cf4 \cb3 , 
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 day, 
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col=\cf6 'treat_day'\cf4 \cb3 , treat, day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 spread
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 key=\cf4 \cb3 treat_day, \cf7 \cb3 value=\cf4 \cb3 count) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome, 
-\f1\b \cf7 \cb3 starts_with
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'ther'\cf4 \cb3 )) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (ther_\cf8 \cb3 07\cf4 \cb3  
-\f1\b \cf9 \cb3 >
-\f2\b0 \cf6  \cf8 3\cf4 \cb3  
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 ther_\cf8 \cb3 35\cf4 \cb3  
-\f1\b \cf9 \cb3 >
-\f2\b0 \cf6  \cf8 3\cf4 \cb3 )\
-ther735\
-\
-
-\f3\i \cf5 \cb3 # start to pair down the data to only include genomes that have enough data for comparisons?
-\f2\i0 \cf4 \cb3 \
-\
-
-\f3\i \cf5 \cb3 ##### only includes estimates from bins that have at least 1 treatment with 4+ observations in any one timepoint  ##
-\f2\i0 \cf4 \cb3 \
-\
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin_day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 one_group
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 bin_day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 nrow
-\f2\b0 \cf4 \cb3 ()\
-\
-
-\f3\i \cf5 \cb3 # 1572 observations
-\f2\i0 \cf4 \cb3 \
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin_day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 one_group
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 bin_day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unlist
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unique
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 length
-\f2\b0 \cf4 \cb3 ()\
-\
-
-\f3\i \cf5 \cb3 #102 genomes
-\f2\i0 \cf4 \cb3 \
-\
-\
-
-\f3\i \cf5 \cb3 # histogram
-\f2\i0 \cf4 \cb3 \
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin_day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 one_group
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 bin_day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 iRep)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_histogram
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 bins=\cf8 50\cf4 \cb3 )
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'Histogram of iRep estimates'\cf4 \cb3 ,\
-          \cf6 \cb3 'considering only those genomes that have \\nat least 1 treatment with 4+ observations at any time'\cf4 \cb3 )\
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin_day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 one_group
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 bin_day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 group_by
-\f2\b0 \cf4 \cb3 (genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 tally
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 n))
-\f1\b \cf9 \cb3 +\cf7 geom_histogram
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 bins=\cf8 30\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'Valid iRep estimates per genome'\cf4 \cb3 , \
-          \cf6 \cb3 'considering only those genomes that have \\nat least 1 treatment with 4+ observations at any time'\cf4 \cb3 )\
-\
-
-\f3\i \cf5 \cb3 # boxplots
-\f2\i0 \cf4 \cb3 \
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin_day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 one_group
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 bin_day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 treatment, \cf7 \cb3 y=\cf4 \cb3 iRep)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_boxplot
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 facet_wrap
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf4 \cb3 day) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep estimates by treatment'\cf4 \cb3 ,\
-          \cf6 \cb3 'considering only those genomes that have \\nat least 1 treatment with 4+ observations at any time'\cf4 \cb3 )\
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin_day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 one_group
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 bin_day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 day, \cf7 \cb3 y=\cf4 \cb3 iRep)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_boxplot
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 facet_wrap
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf4 \cb3 treatment) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep estimates by time'\cf4 \cb3 , \
-          \cf6 \cb3 'considering only those genomes that have \\nat least 1 treatment with 4+ observations at any time'\cf4 \cb3 )\
-\
-
-\f3\i \cf5 \cb3 ### 2 with 4 plus 
-\f2\i0 \cf10 \cb3 ###\cf4 \cb3 \
-
-\f3\i \cf5 \cb3 # only includes bins that have at least 2 treatments with 4+ observations
-\f2\i0 \cf4 \cb3 \
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin_day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 two_groups
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 bin_day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 nrow
-\f2\b0 \cf4 \cb3 ()\
-\
-
-\f3\i \cf5 \cb3 # 1062 observations
-\f2\i0 \cf4 \cb3 \
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin_day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 two_groups
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 bin_day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unlist
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unique
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 length
-\f2\b0 \cf4 \cb3 ()\
-\
-
-\f3\i \cf5 \cb3 #56 genomes
-\f2\i0 \cf4 \cb3 \
-\
-\
-
-\f3\i \cf5 \cb3 # histogram
-\f2\i0 \cf4 \cb3 \
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin_day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 two_groups
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 bin_day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 iRep)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_histogram
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 bins=\cf8 50\cf4 \cb3 )
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'Histogram of iRep estimates'\cf4 \cb3 ,\
-          \cf6 \cb3 'considering only those genomes that have \\nat least 2 treatments with 4+ observations at any time'\cf4 \cb3 )\
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin_day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 two_groups
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 bin_day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 group_by
-\f2\b0 \cf4 \cb3 (genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 tally
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 n))
-\f1\b \cf9 \cb3 +\cf7 geom_histogram
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 bins=\cf8 30\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'Valid iRep estimates per genome'\cf4 \cb3 , \
-          \cf6 \cb3 'considering only those genomes that have \\nat least 2 treatments with 4+ observations at any time'\cf4 \cb3 )\
-\
-
-\f3\i \cf5 \cb3 # boxplots
-\f2\i0 \cf4 \cb3 \
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin_day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 two_groups
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 bin_day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 treatment, \cf7 \cb3 y=\cf4 \cb3 iRep)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_boxplot
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 facet_wrap
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf4 \cb3 day) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep estimates by treatment'\cf4 \cb3 ,\
-          \cf6 \cb3 'considering only those genomes that have \\nat least 2 treatments with 4+ observations at any time'\cf4 \cb3 )\
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin_day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 two_groups
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 bin_day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 day, \cf7 \cb3 y=\cf4 \cb3 iRep)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_boxplot
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 facet_wrap
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf4 \cb3 treatment) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep estimates by time'\cf4 \cb3 , \
-          \cf6 \cb3 'considering only those genomes that have \\nat least 2 treatments with 4+ observations at any time'\cf4 \cb3 )\
-\
-
-\f3\i \cf5 \cb3 ### 3 with 4 plus 
-\f2\i0 \cf10 \cb3 ###\cf4 \cb3 \
-
-\f3\i \cf5 \cb3 # only includes bins with 4+ observations in all 3 treatments at any one timepoint
-\f2\i0 \cf4 \cb3 \
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin_day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 all_groups
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 bin_day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 nrow
-\f2\b0 \cf4 \cb3 ()\
-\
-
-\f3\i \cf5 \cb3 # 507 observations
-\f2\i0 \cf4 \cb3 \
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin_day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 all_groups
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 bin_day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unlist
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unique
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 length
-\f2\b0 \cf4 \cb3 ()\
-\
-
-\f3\i \cf5 \cb3 #22 genomes
-\f2\i0 \cf4 \cb3 \
-\
-\
-
-\f3\i \cf5 \cb3 # histogram
-\f2\i0 \cf4 \cb3 \
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin_day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 all_groups
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 bin_day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 iRep)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_histogram
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 bins=\cf8 50\cf4 \cb3 )
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'Histogram of iRep estimates'\cf4 \cb3 ,\
-          \cf6 \cb3 'considering only those genomes that have \\nat least 3 treatments with 4+ observations at any time'\cf4 \cb3 )\
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin_day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 all_groups
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 bin_day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 group_by
-\f2\b0 \cf4 \cb3 (genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 tally
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 n))
-\f1\b \cf9 \cb3 +\cf7 geom_histogram
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 bins=\cf8 30\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'Valid iRep estimates per genome'\cf4 \cb3 , \
-          \cf6 \cb3 'considering only those genomes that have \\nat least 3 treatments with 4+ observations at any time'\cf4 \cb3 )\
-\
-
-\f3\i \cf5 \cb3 # boxplots
-\f2\i0 \cf4 \cb3 \
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin_day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 all_groups
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 bin_day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 treatment, \cf7 \cb3 y=\cf4 \cb3 iRep)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_boxplot
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 facet_wrap
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf4 \cb3 day) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep estimates by treatment'\cf4 \cb3 ,\
-          \cf6 \cb3 'considering only those genomes that have \\nat least 3 treatments with 4+ observations at any time'\cf4 \cb3 )\
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 unite
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 col =\cf4 \cb3  \cf6 \cb3 'bin_day'\cf4 \cb3 , genome, day, \cf7 \cb3 remove =\cf4 \cb3  \cf5 \cb3 FALSE\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin_day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 all_groups
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 bin_day) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 day, \cf7 \cb3 y=\cf4 \cb3 iRep)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_boxplot
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 facet_wrap
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf4 \cb3 treatment) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep estimates by time'\cf4 \cb3 , \
-          \cf6 \cb3 'considering only those genomes that have \\nat least 3 treatments with 4+ observations at any time'\cf4 \cb3 )\
-\
-
-\f3\i \cf5 \cb3 ############ DAY 7 DIFFS BTWEEN GRUOPS ##########
-\f2\i0 \cf4 \cb3 \
-
-\f3\i \cf5 \cb3 # only includes genomes with 4+ observations in all 3 treatment groups at D7
-\f2\i0 \cf4 \cb3 \
-
-\f3\i \cf5 \cb3 # 8 genomes, 149 observations
-\f2\i0 \cf4 \cb3 \
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 D7
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '07'\cf4 \cb3 ))
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 treatment, \cf7 \cb3 y=\cf4 \cb3 iRep, \cf7 \cb3 fill=\cf4 \cb3 treatment)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_violin
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_jitter
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 shape=\cf8 21\cf4 \cb3 , \cf7 \cb3 width =\cf4 \cb3  \cf8 \cb3 .2\cf4 \cb3 )
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep growth rate estimates at D7'\cf4 \cb3 , \cf6 \cb3 ''\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 stat_summary
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 fun.y =\cf4 \cb3  \cf6 \cb3 "mean"\cf4 \cb3 , \cf7 \cb3 colour =\cf4 \cb3  \cf6 \cb3 "black"\cf4 \cb3 , \cf7 \cb3 size =\cf4 \cb3  \cf8 \cb3 2\cf4 \cb3 , \cf7 \cb3 geom =\cf4 \cb3  \cf6 \cb3 "point"\cf4 \cb3 )\
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 D7
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '07'\cf4 \cb3 ))
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 genome, \cf7 \cb3 y=\cf4 \cb3 iRep, \cf7 \cb3 fill=\cf4 \cb3 treatment)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_boxplot
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_jitter
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 shape=\cf8 21\cf4 \cb3 , \cf7 \cb3 position=
-\f1\b position_dodge2
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 width =\cf4 \cb3  \cf8 \cb3 .75\cf4 \cb3 )) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep growth rate estimates at D7'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 ()\
-\
-D7_treat_comp <-\cf6 \cb3  \cf4 \cb3 dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 D7
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '07'\cf4 \cb3 ))\
-\
-\
-D7_tukeys <-\cf6 \cb3  \cf4 \cb3 D7_treat_comp 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 group_by
-\f2\b0 \cf4 \cb3 (genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 nest
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 ANOVA=
-\f1\b map
-\f2\b0 \cf4 \cb3 (data, 
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf6  
-\f1\b \cf7 aov
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 data=\cf4 \cb3 ., iRep 
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf6  \cf4 \cb3 treatment)), \
-         \cf7 \cb3 tuk =\cf4 \cb3  
-\f1\b \cf7 \cb3 map
-\f2\b0 \cf4 \cb3 (ANOVA, TukeyHSD), \
-         \cf7 \cb3 tid_tuk =\cf4 \cb3  
-\f1\b \cf7 \cb3 map
-\f2\b0 \cf4 \cb3 (tuk, tidy)) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome, tid_tuk) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 unnest
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 cols =\cf4 \cb3  tid_tuk) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 tuk_pval =\cf4 \cb3  adj.p.value, \
-         \cf7 \cb3 fdr.pval =\cf4 \cb3  
-\f1\b \cf7 \cb3 p.adjust
-\f2\b0 \cf4 \cb3 (tuk_pval, \cf7 \cb3 method =\cf4 \cb3  \cf6 \cb3 'fdr'\cf4 \cb3 ))\
-\
-sigs <-\cf6 \cb3  \cf4 \cb3 D7_tukeys 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 adj.p.value) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (tuk_pval 
-\f1\b \cf9 \cb3 <
-\f2\b0 \cf6  \cf8 0.05\cf4 \cb3 )\
-\
-sigs\
-\
-\
-sigs_fdr <-\cf6 \cb3  \cf4 \cb3 sigs 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (fdr.pval 
-\f1\b \cf9 \cb3 <
-\f2\b0 \cf6  \cf8 0.1\cf4 \cb3 )\
-\
-\
-
-\f3\i \cf5 \cb3 # only those bins with a sig difference detected in tukey's test
-\f2\i0 \cf4 \cb3 \
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 D7
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '07'\cf4 \cb3 ))
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 sigs
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 genome, \cf7 \cb3 y=\cf4 \cb3 iRep, \cf7 \cb3 fill=\cf4 \cb3 treatment)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_boxplot
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_jitter
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 shape=\cf8 21\cf4 \cb3 , \cf7 \cb3 position=
-\f1\b position_dodge2
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 width =\cf4 \cb3  \cf8 \cb3 .75\cf4 \cb3 )) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep growth rate estimates at D7'\cf4 \cb3 , \cf6 \cb3 'tukey pval < 0.05 -- not adjusted for multiple tukeys'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 ()\
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 D7
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '07'\cf4 \cb3 ))
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 sigs_fdr
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 genome, \cf7 \cb3 y=\cf4 \cb3 iRep, \cf7 \cb3 fill=\cf4 \cb3 treatment)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_boxplot
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_jitter
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 shape=\cf8 21\cf4 \cb3 , \cf7 \cb3 position=
-\f1\b position_dodge2
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 width =\cf4 \cb3  \cf8 \cb3 .75\cf4 \cb3 )) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep growth rate estimates at D7'\cf4 \cb3 , \cf6 \cb3 'fdr pval < 0.10'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 ()\
-\
-D7_tukeys 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f3\i \cf5 #filter(comparison != 'ther-sub') %>% 
-\f2\i0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 genome, \cf7 \cb3 y=\cf4 \cb3 estimate)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_point
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_errorbar
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 ymin=\cf4 \cb3 conf.low, \cf7 \cb3 ymax=\cf4 \cb3 conf.high), \cf7 \cb3 width=\cf4 \cb3 .\cf8 \cb3 2\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 coord_flip
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_hline
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 yintercept =\cf4 \cb3  \cf8 \cb3 0\cf4 \cb3 , \cf7 \cb3 color=\cf6 'red'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '95% confidence intervals for the difference in growth rate between treatments'\cf4 \cb3 ,\
-          \cf6 \cb3 'negative estimates indicate higher growth rate in ctrl, D7 only'\cf4 \cb3 )
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 facet_wrap
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf4 \cb3 comparison)\
-\
-
-\f3\i \cf5 \cb3 # mixed model? not super confident about this.
-\f2\i0 \cf4 \cb3 \
-
-\f1\b \cf7 \cb3 summary
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 lmer
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 data =\cf4 \cb3  D7_treat_comp, \cf7 \cb3 formula =\cf4 \cb3  iRep 
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf6  \cf4 \cb3 treatment 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 (\cf8 \cb3 1
-\f1\b \cf9 |
-\f2\b0 \cf4 \cb3 genome)))\
-\
-checkm 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (bin 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 sigs
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (bin, marker_lineage, Completeness, Contamination)\
-\
-
-\f3\i \cf5 \cb3 ###### DAY 35 DIFF BTWEEN GROUPS #######
-\f2\i0 \cf4 \cb3 \
-
-\f3\i \cf5 \cb3 # only includes genomes with 4+ observations in all 3 treatment groups at D35
-\f2\i0 \cf4 \cb3 \
-
-\f3\i \cf5 \cb3 # 11 genomes, 211 observations
-\f2\i0 \cf4 \cb3 \
-\
-\
-D35_treat_comp <-\cf6 \cb3  \cf4 \cb3 dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 D35
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '35'\cf4 \cb3 ))\
-\
-\
-D35_treat_comp 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 treatment, \cf7 \cb3 y=\cf4 \cb3 iRep, \cf7 \cb3 fill=\cf4 \cb3 treatment)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_violin
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_jitter
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 shape=\cf8 21\cf4 \cb3 , \cf7 \cb3 width =\cf4 \cb3  \cf8 \cb3 .2\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep growth rate estimates at D35'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 ()\
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 D35
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '35'\cf4 \cb3 ))
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 genome, \cf7 \cb3 y=\cf4 \cb3 iRep, \cf7 \cb3 fill=\cf4 \cb3 treatment)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_boxplot
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_jitter
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 shape=\cf8 21\cf4 \cb3 , \cf7 \cb3 position=
-\f1\b position_dodge2
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 width =\cf4 \cb3  \cf8 \cb3 .75\cf4 \cb3 )) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep growth rate estimates at D35, by genome'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 ()\
-\
-D35_tukeys <-\cf6 \cb3  \cf4 \cb3 D35_treat_comp 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 group_by
-\f2\b0 \cf4 \cb3 (genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 nest
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 ANOVA=
-\f1\b map
-\f2\b0 \cf4 \cb3 (data, 
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf6  
-\f1\b \cf7 aov
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 data=\cf4 \cb3 ., iRep 
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf6  \cf4 \cb3 treatment)), \
-         \cf7 \cb3 tuk =\cf4 \cb3  
-\f1\b \cf7 \cb3 map
-\f2\b0 \cf4 \cb3 (ANOVA, TukeyHSD), \
-         \cf7 \cb3 tid_tuk =\cf4 \cb3  
-\f1\b \cf7 \cb3 map
-\f2\b0 \cf4 \cb3 (tuk, tidy)) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome, tid_tuk) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 unnest
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 cols =\cf4 \cb3  tid_tuk) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 tuk_pval =\cf4 \cb3  adj.p.value, \
-         \cf7 \cb3 fdr.pval =\cf4 \cb3  
-\f1\b \cf7 \cb3 p.adjust
-\f2\b0 \cf4 \cb3 (tuk_pval, \cf7 \cb3 method =\cf4 \cb3  \cf6 \cb3 'fdr'\cf4 \cb3 )) \
-\
-sigs <-\cf6 \cb3  \cf4 \cb3 D35_tukeys 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 adj.p.value) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (tuk_pval 
-\f1\b \cf9 \cb3 <
-\f2\b0 \cf6  \cf8 0.05\cf4 \cb3 )\
-\
-
-\f3\i \cf5 \cb3 # no sigs by anova/tukey
-\f2\i0 \cf4 \cb3 \
-\
-\
-D35_tukeys 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f3\i \cf5 #filter(comparison != 'ther-sub') %>% 
-\f2\i0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 genome, \cf7 \cb3 y=\cf4 \cb3 estimate)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_point
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_errorbar
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 ymin=\cf4 \cb3 conf.low, \cf7 \cb3 ymax=\cf4 \cb3 conf.high), \cf7 \cb3 width=\cf4 \cb3 .\cf8 \cb3 2\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 coord_flip
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_hline
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 yintercept =\cf4 \cb3  \cf8 \cb3 0\cf4 \cb3 , \cf7 \cb3 color=\cf6 'red'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '95% confidence intervals for the difference in growth rate between treatments'\cf4 \cb3 ,\
-          \cf6 \cb3 'negative estimates indicate higher growth rate in ctrl, D35 only'\cf4 \cb3 )
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 facet_wrap
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf4 \cb3 comparison)\
-\
-
-\f3\i \cf5 \cb3 # mixed model? not super confident about this.
-\f2\i0 \cf4 \cb3 \
-
-\f1\b \cf7 \cb3 summary
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 lmer
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 data =\cf4 \cb3  D35_treat_comp, \cf7 \cb3 formula =\cf4 \cb3  iRep 
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf6  \cf4 \cb3 treatment 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 (\cf8 \cb3 1
-\f1\b \cf9 |
-\f2\b0 \cf4 \cb3 genome)))\
-\
-
-\f3\i \cf5 \cb3 # no treatment effect detectable at D35
-\f2\i0 \cf4 \cb3 \
-\
-\
-\
-\
-
-\f3\i \cf5 \cb3 ###### Day 78 Diff BTWEEN GROUPS ######
-\f2\i0 \cf4 \cb3 \
-
-\f3\i \cf5 \cb3 # only includes genomes with 4+ observations in all 3 treatment groups at D35
-\f2\i0 \cf4 \cb3 \
-
-\f3\i \cf5 \cb3 # 8 genomes, 147 observations
-\f2\i0 \cf4 \cb3 \
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 D78
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '78'\cf4 \cb3 ))
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 genome, \cf7 \cb3 y=\cf4 \cb3 iRep, \cf7 \cb3 fill=\cf4 \cb3 treatment)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_boxplot
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_jitter
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 shape=\cf8 21\cf4 \cb3 , \cf7 \cb3 position=
-\f1\b position_dodge2
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 width =\cf4 \cb3  \cf8 \cb3 .75\cf4 \cb3 ))\
-\
-\
-D78_treat_comp <-\cf6 \cb3  \cf4 \cb3 dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 D78
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '78'\cf4 \cb3 ))\
-\
-\
-\
-D78_treat_comp 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 treatment, \cf7 \cb3 y=\cf4 \cb3 iRep, \cf7 \cb3 fill=\cf4 \cb3 treatment)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_violin
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_jitter
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 shape=\cf8 21\cf4 \cb3 , \cf7 \cb3 width =\cf4 \cb3  \cf8 \cb3 .2\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep growth rate estimates at D78'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 ()\
-\
-D78_treat_comp 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 genome, \cf7 \cb3 y=\cf4 \cb3 iRep, \cf7 \cb3 fill=\cf4 \cb3 treatment)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_boxplot
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_jitter
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 shape=\cf8 21\cf4 \cb3 , \cf7 \cb3 position=
-\f1\b position_dodge2
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 width =\cf4 \cb3  \cf8 \cb3 .75\cf4 \cb3 )) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep growth rate estimates at D78, by genome'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 theme_bw
-\f2\b0 \cf4 \cb3 ()\
-\
-D78_tukeys <-\cf6 \cb3  \cf4 \cb3 D78_treat_comp 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 group_by
-\f2\b0 \cf4 \cb3 (genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 nest
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 ANOVA=
-\f1\b map
-\f2\b0 \cf4 \cb3 (data, 
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf6  
-\f1\b \cf7 aov
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 data=\cf4 \cb3 ., iRep 
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf6  \cf4 \cb3 treatment)), \
-         \cf7 \cb3 tuk =\cf4 \cb3  
-\f1\b \cf7 \cb3 map
-\f2\b0 \cf4 \cb3 (ANOVA, TukeyHSD), \
-         \cf7 \cb3 tid_tuk =\cf4 \cb3  
-\f1\b \cf7 \cb3 map
-\f2\b0 \cf4 \cb3 (tuk, tidy)) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome, tid_tuk) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 unnest
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 cols =\cf4 \cb3  tid_tuk) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 tuk_pval =\cf4 \cb3  adj.p.value, \
-         \cf7 \cb3 fdr.pval =\cf4 \cb3  
-\f1\b \cf7 \cb3 p.adjust
-\f2\b0 \cf4 \cb3 (tuk_pval, \cf7 \cb3 method =\cf4 \cb3  \cf6 \cb3 'fdr'\cf4 \cb3 ))\
-\
-\
-sigs <-\cf6 \cb3  \cf4 \cb3 D78_tukeys 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 adj.p.value) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (tuk_pval 
-\f1\b \cf9 \cb3 <
-\f2\b0 \cf6  \cf8 0.05\cf4 \cb3 )\
-\
-\
-D78_tukeys 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (comparison 
-\f1\b \cf9 \cb3 !=
-\f2\b0 \cf6  'ther-sub'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 genome, \cf7 \cb3 y=\cf4 \cb3 estimate)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_point
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_errorbar
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 ymin=\cf4 \cb3 conf.low, \cf7 \cb3 ymax=\cf4 \cb3 conf.high), \cf7 \cb3 width=\cf4 \cb3 .\cf8 \cb3 2\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 coord_flip
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_hline
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 yintercept =\cf4 \cb3  \cf8 \cb3 0\cf4 \cb3 , \cf7 \cb3 color=\cf6 'red'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '95% confidence intervals for the difference in growth rate between treatments'\cf4 \cb3 ,\
-          \cf6 \cb3 'negative estimates indicate higher growth rate in ctrl, D35 only'\cf4 \cb3 )
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 facet_wrap
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf4 \cb3 comparison)\
-\
-
-\f3\i \cf5 \cb3 # mixed model? not super confident about this.
-\f2\i0 \cf4 \cb3 \
-
-\f1\b \cf7 \cb3 summary
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 lmer
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 data =\cf4 \cb3  D78_treat_comp, \cf7 \cb3 formula =\cf4 \cb3  iRep 
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf6  \cf4 \cb3 treatment 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 (\cf8 \cb3 1
-\f1\b \cf9 |
-\f2\b0 \cf4 \cb3 genome)))\
-\
-\
-
-\f3\i \cf5 \cb3 # small treatment effect detected, both sub and ther, but at this timepoint they are receiving equal doses.
-\f2\i0 \cf4 \cb3 \
-\
-
-\f3\i \cf5 \cb3 ########### 
-\f2\i0 \cf4 \cb3 END
-\f3\i \cf5 \cb3  TREATMENT EFFECT #########\
-\
+
+
+library(tidyverse)
+library(broom)
+library(lme4)
+library(lmerTest)
+library(emmeans)
+
+
+
+#  CheckM bin info  #
+colnams <- c('bin', 'marker_lineage', 'num_genomes', 'num_markers', 'num_marker_sets', 'x0', 'x1', 'x2', 'x3','x4','x5+', 'Completeness', 'Contamination', 'Strain_heterogeneity')
+
+checkm <- read_delim('CheckM_clean3.txt', delim = '\t', trim_ws = TRUE, skip = 2, col_names = colnams) %>%
+  mutate(bin=sub('_new', '', bin)) 
+
+
+
+# read in the data and extract some metadata from sample names
+dat <- read_tsv('ALL_RESULTS_BULK_MAP.txt', skip = 1, col_types = c('iccnnnnnnninn'))%>%
+  mutate(sample = sub('_mapped.sam','',sample),
+         genome = sub('.fa','',genome),
+         day = sub('d([0-9][0-9])([a-z]+)([0-9][0-9][0-9])','\\1',sample), 
+         treatment = sub('d([0-9][0-9])([a-z]+)([0-9][0-9][0-9])','\\2',sample), 
+         bird = sub('d([0-9][0-9])([a-z]+)([0-9][0-9][0-9])','\\3',sample), 
+         day_num = as.numeric(day))  %>% 
+  filter(!(is.na(iRep))) %>%
+  filter(!grepl('ex', sample)) %>% 
+  select(-X1, -`fragments/Mbp`)
+
+
+dat <- dat %>% filter(coverage > 5)  # only keep estimates from samples where bins had > 5x coverage (as reccommended)
+
+# Histogram of all iRep estimates
+dat %>% ggplot(aes(x=iRep)) +
+  geom_histogram(bins = 50) +
+  theme_bw() + ggtitle('Histogram of all valid iRep estimates')
+
+
+# some bins have extremely high coverage / relative abundance
+dat %>% ggplot(aes(x=(coverage))) + geom_histogram(bins = 100) + 
+  ggtitle('Histogram of bin coverages') +
+  theme_bw()
+
+dat %>%
+  ggplot(aes(x=log2(coverage))) +
+  geom_histogram(bins = 100) +
+  ggtitle('Histogram of log(coverage)') + 
+  theme_bw()
+
+dat %>%
+  ggplot(aes(x=`relative abundance`)) +
+  geom_histogram(bins = 100) +
+  ggtitle('Histogram of relative_abundance') + 
+  theme_bw()
+
+dat %>%
+  ggplot(aes(x=(log2(`relative abundance`)))) +
+  geom_histogram(bins = 100) +
+  ggtitle('Histogram of log(relative_abundance)') + 
+  theme_bw()
+
+#### iRep is significantly negatively correlated with both coverage and relative abundance
+
+cor.test(x = dat$iRep, log(dat$`relative abundance`))
+
+dat %>% ggplot(aes(x=log(`relative abundance`), y=iRep)) +
+  geom_point() +
+  geom_smooth(method = 'lm') +
+  theme_bw()
+
+# what about testing this within each bin?
+
+
+valid_irep_totbin <- dat %>% 
+  group_by(genome) %>%
+  tally() %>%
+  arrange(desc(n))
+
+valid_irep_totbin %>%
+  ggplot(aes(x=n)) +
+  geom_histogram(bins = 50) +
+  xlab('number of valid iRep estimates')+
+  ggtitle('number of valid iRep estimates per bin') + 
+  theme_bw()
+
+dat %>% nrow()
+
+# 2278 valid iRep estimates
+
+dat %>% select(genome) %>% unlist() %>% unique() %>% length()
+
+# from 244 genomes
+
+
+# How do these estimates look by treatment? by day?
+# boxplots
+dat %>% 
+  ggplot(aes(x=treatment, y=iRep)) + geom_boxplot() + facet_wrap(~day) + 
+  theme_bw()
+
+dat %>% 
+  ggplot(aes(x=day, y=iRep)) + geom_boxplot() + facet_wrap(~treatment)+ 
+  theme_bw()
+
+### neat, maybe a treatment effect? 
+### maybe a time effect? 
+
+### But, we dont know if we are measuring the same genomes growth rates in each of these categories...
+
+#####  main point here is that the data are sparse #######
+
+# calculating which bins have enough datapoints available for meaningful stats
+
+number_of_obs <- dat %>% 
+  group_by(day, treatment, genome) %>% 
+  tally() %>% spread(key = treatment, value=n) %>%
+  ungroup() %>% group_by(day, genome) %>% 
+  mutate(num_NA = sum(is.na(c(ctrl, sub, ther))), 
+         num_w_4p = sum(c(ctrl, sub, ther) >3, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  unite(col = 'bin_day', genome, day, remove = FALSE)
+  
+number_of_obs
+
+# data grouped by bin and day to tally numobs per group
+
+
+# These have at least 1 treatment group with 4+ observations at the given timepoint
+
+one_group <- number_of_obs %>%  filter(num_w_4p >= 1)
+one_group
+
+#### These have at least 2 groups with 4+ observations
+two_groups <- number_of_obs %>%  filter(num_w_4p > 1)  
+two_groups
+
+# these have all 3 groups represented by at least 4 data points each
+all_groups <- number_of_obs %>% filter(num_w_4p == 3)
+all_groups
+
+# no bin has 4 or more observations in every group at every timepoint
+number_of_obs %>% select(genome, day, num_w_4p) %>%
+  spread(key = day, value = num_w_4p) %>% 
+  mutate(all_times = `07`+ `35`+ `78`) %>% arrange(desc(all_times)) %>% 
+  mutate(d7g = ifelse(`07` == 3, TRUE, FALSE), 
+         d35g = ifelse(`35` == 3, TRUE, FALSE),
+         d78g = ifelse(`78` == 3, TRUE, FALSE))
+
+# kindof makes sense, both ABX treatment and time affected the community composition
+#
+# Will probably have to stick to comparing iRep estimates in two main ways:
+#  1) Within timepoint between treatments
+#  2) within a treatment between timepoints
+
+
+## one timepoint ##
+
+# 8 bins have all treatment groups represented with 4+ observations at D7
+D7 <- all_groups %>%
+  select(genome, day, num_w_4p) %>% 
+  spread(key=day, value = num_w_4p) %>% 
+  filter(!is.na(`07`))
+D7
+
+# 11 bins have all treatment groups represented with 4+ observations at D35
+D35 <- all_groups %>%
+  select(genome, day, num_w_4p) %>% 
+  spread(key=day, value = num_w_4p) %>% 
+  filter(!is.na(`35`))
+D35
+
+# 8 bins have all treatment groups represented with 4+ observations at D78
+D78 <- all_groups %>%
+  select(genome, day, num_w_4p) %>% 
+  spread(key=day, value = num_w_4p) %>% 
+  filter(!is.na(`78`))
+D78
+
+### 2 timepoints ###
+
+# 4 bins have all 3 groups with 4+ observations at both d7 and d35
+all_groups %>%
+  select(genome, day, num_w_4p) %>% 
+  spread(key=day, value = num_w_4p) %>% 
+  mutate(d7vd35 = `07` + `35`) %>% 
+  filter(!is.na(d7vd35))
+
+# 1 bin has all 3 groups with 4+ observations at both d35 and d78
+all_groups %>%
+  select(genome, day, num_w_4p) %>% 
+  spread(key=day, value = num_w_4p) %>% 
+  mutate(d35vd78 = `35` + `78`) %>% 
+  filter(!is.na(d35vd78))
+
+# no bin has all 3 groups with 4+ observations at d7 and d78
+all_groups %>%
+  select(genome, day, num_w_4p) %>% 
+  spread(key=day, value = num_w_4p) %>% 
+  mutate(d07vd78 = `07` + `78`) %>% 
+  filter(!is.na(d07vd78))
+
+##### These sets of bins can be used to investigate time effect #####
+##### within each treatment #####
+
+# these ones can compare d7 vs d35 in ctrl
+
+# 15 bins
+ctrl735 <- number_of_obs %>% 
+#  filter(num_w_4p >1) %>%
+#  filter(ctrl >3) %>%
+  select(-bin_day, -num_NA, -num_w_4p) %>% 
+  gather(key = 'treat', value = 'count', -day, -genome) %>%
+  unite(col='treat_day', treat, day) %>% spread(key=treat_day, value=count) %>% 
+  select(genome, starts_with('ctrl')) %>% 
+  filter(ctrl_07 > 3 & ctrl_35 > 3)
+ctrl735
+
+# 8 bins
+sub735 <- number_of_obs %>% 
+  #  filter(num_w_4p >1) %>%
+  #  filter(ctrl >3) %>%
+  select(-bin_day, -num_NA, -num_w_4p) %>% 
+  gather(key = 'treat', value = 'count', -day, -genome) %>%
+  unite(col='treat_day', treat, day) %>% spread(key=treat_day, value=count) %>% 
+  select(genome, starts_with('sub')) %>% 
+  filter(sub_07 > 3 & sub_35 > 3)
+sub735
+
+# 11 bins
+ther735 <- number_of_obs %>% 
+  #  filter(num_w_4p >1) %>%
+  #  filter(ctrl >3) %>%
+  select(-bin_day, -num_NA, -num_w_4p) %>% 
+  gather(key = 'treat', value = 'count', -day, -genome) %>%
+  unite(col='treat_day', treat, day) %>% spread(key=treat_day, value=count) %>% 
+  select(genome, starts_with('ther')) %>% 
+  filter(ther_07 > 3 & ther_35 > 3)
+ther735
+
+# start to pair down the data to only include genomes that have enough data for comparisons?
+
+##### only includes estimates from bins that have at least 1 treatment with 4+ observations in any one timepoint  ##
+
+
+dat %>% unite(col = 'bin_day', genome, day, remove = FALSE) %>% 
+  filter(bin_day %in% one_group$bin_day) %>% nrow()
+
+# 1572 observations
+
+dat %>% unite(col = 'bin_day', genome, day, remove = FALSE) %>% 
+  filter(bin_day %in% one_group$bin_day) %>%
+  select(genome) %>% unlist() %>% unique() %>% length()
+
+#102 genomes
+
+
+# histogram
+dat %>% unite(col = 'bin_day', genome, day, remove = FALSE) %>% 
+  filter(bin_day %in% one_group$bin_day) %>% 
+  ggplot(aes(x=iRep)) + 
+  geom_histogram(bins=50)+
+  theme_bw() + 
+  ggtitle('Histogram of iRep estimates',
+          'considering only those genomes that have \nat least 1 treatment with 4+ observations at any time')
+
+dat %>% unite(col = 'bin_day', genome, day, remove = FALSE) %>% 
+  filter(bin_day %in% one_group$bin_day) %>%
+  group_by(genome) %>%
+  tally() %>% 
+  ggplot(aes(x=n))+geom_histogram(bins=30) + 
+  ggtitle('Valid iRep estimates per genome', 
+          'considering only those genomes that have \nat least 1 treatment with 4+ observations at any time')
+
+# boxplots
+dat %>% unite(col = 'bin_day', genome, day, remove = FALSE) %>% 
+  filter(bin_day %in% one_group$bin_day) %>% 
+  ggplot(aes(x=treatment, y=iRep)) + geom_boxplot() + facet_wrap(~day) + 
+  ggtitle('iRep estimates by treatment',
+          'considering only those genomes that have \nat least 1 treatment with 4+ observations at any time')
+
+dat %>% unite(col = 'bin_day', genome, day, remove = FALSE) %>% 
+  filter(bin_day %in% one_group$bin_day) %>% 
+  ggplot(aes(x=day, y=iRep)) + geom_boxplot() + facet_wrap(~treatment) +
+  ggtitle('iRep estimates by time', 
+          'considering only those genomes that have \nat least 1 treatment with 4+ observations at any time')
+
+### 2 with 4 plus ###
+# only includes bins that have at least 2 treatments with 4+ observations
+
+dat %>% unite(col = 'bin_day', genome, day, remove = FALSE) %>% 
+  filter(bin_day %in% two_groups$bin_day) %>% nrow()
+
+# 1062 observations
+
+dat %>% unite(col = 'bin_day', genome, day, remove = FALSE) %>% 
+  filter(bin_day %in% two_groups$bin_day) %>%
+  select(genome) %>% unlist() %>% unique() %>% length()
+
+#56 genomes
+
+
+# histogram
+dat %>% unite(col = 'bin_day', genome, day, remove = FALSE) %>% 
+  filter(bin_day %in% two_groups$bin_day) %>% 
+  ggplot(aes(x=iRep)) + 
+  geom_histogram(bins=50)+
+  theme_bw() + 
+  ggtitle('Histogram of iRep estimates',
+          'considering only those genomes that have \nat least 2 treatments with 4+ observations at any time')
+
+dat %>% unite(col = 'bin_day', genome, day, remove = FALSE) %>% 
+  filter(bin_day %in% two_groups$bin_day) %>%
+  group_by(genome) %>%
+  tally() %>% 
+  ggplot(aes(x=n))+geom_histogram(bins=30) + 
+  ggtitle('Valid iRep estimates per genome', 
+          'considering only those genomes that have \nat least 2 treatments with 4+ observations at any time')
+
+# boxplots
+dat %>% unite(col = 'bin_day', genome, day, remove = FALSE) %>% 
+  filter(bin_day %in% two_groups$bin_day) %>% 
+  ggplot(aes(x=treatment, y=iRep)) + geom_boxplot() + facet_wrap(~day) + 
+  ggtitle('iRep estimates by treatment',
+          'considering only those genomes that have \nat least 2 treatments with 4+ observations at any time')
+
+dat %>% unite(col = 'bin_day', genome, day, remove = FALSE) %>% 
+  filter(bin_day %in% two_groups$bin_day) %>% 
+  ggplot(aes(x=day, y=iRep)) + geom_boxplot() + facet_wrap(~treatment) +
+  ggtitle('iRep estimates by time', 
+          'considering only those genomes that have \nat least 2 treatments with 4+ observations at any time')
+
+### 3 with 4 plus ###
+# only includes bins with 4+ observations in all 3 treatments at any one timepoint
+
+dat %>% unite(col = 'bin_day', genome, day, remove = FALSE) %>% 
+  filter(bin_day %in% all_groups$bin_day) %>% nrow()
+
+# 507 observations
+
+dat %>% unite(col = 'bin_day', genome, day, remove = FALSE) %>% 
+  filter(bin_day %in% all_groups$bin_day) %>%
+  select(genome) %>% unlist() %>% unique() %>% length()
+
+#22 genomes
+
+
+# histogram
+dat %>% unite(col = 'bin_day', genome, day, remove = FALSE) %>% 
+  filter(bin_day %in% all_groups$bin_day) %>% 
+  ggplot(aes(x=iRep)) + 
+  geom_histogram(bins=50)+
+  theme_bw() + 
+  ggtitle('Histogram of iRep estimates',
+          'considering only those genomes that have \nat least 3 treatments with 4+ observations at any time')
+
+dat %>% unite(col = 'bin_day', genome, day, remove = FALSE) %>% 
+  filter(bin_day %in% all_groups$bin_day) %>%
+  group_by(genome) %>%
+  tally() %>% 
+  ggplot(aes(x=n))+geom_histogram(bins=30) + 
+  ggtitle('Valid iRep estimates per genome', 
+          'considering only those genomes that have \nat least 3 treatments with 4+ observations at any time')
+
+# boxplots
+dat %>% unite(col = 'bin_day', genome, day, remove = FALSE) %>% 
+  filter(bin_day %in% all_groups$bin_day) %>% 
+  ggplot(aes(x=treatment, y=iRep)) + geom_boxplot() + facet_wrap(~day) + 
+  ggtitle('iRep estimates by treatment',
+          'considering only those genomes that have \nat least 3 treatments with 4+ observations at any time')
+
+dat %>% unite(col = 'bin_day', genome, day, remove = FALSE) %>% 
+  filter(bin_day %in% all_groups$bin_day) %>% 
+  ggplot(aes(x=day, y=iRep)) + geom_boxplot() + facet_wrap(~treatment) +
+  ggtitle('iRep estimates by time', 
+          'considering only those genomes that have \nat least 3 treatments with 4+ observations at any time')
+
+############ DAY 7 DIFFS BTWEEN GRUOPS ##########
+# only includes genomes with 4+ observations in all 3 treatment groups at D7
+# 8 genomes, 149 observations
+
+dat %>% filter(genome %in% D7$genome & day %in% c('07'))%>% 
+  ggplot(aes(x=treatment, y=iRep, fill=treatment)) + geom_violin() + geom_jitter(shape=21, width = .2)+
+  ggtitle('iRep growth rate estimates at D7', '') + theme_bw() +
+  stat_summary(fun.y = "mean", colour = "black", size = 2, geom = "point")
+
+dat %>% filter(genome %in% D7$genome & day %in% c('07'))%>% 
+  ggplot(aes(x=genome, y=iRep, fill=treatment)) +
+  geom_boxplot() +
+  geom_jitter(shape=21, position=position_dodge2(width = .75)) + 
+  ggtitle('iRep growth rate estimates at D7') + theme_bw()
+
+D7_treat_comp <- dat %>% filter(genome %in% D7$genome & day %in% c('07'))
+
+
+D7_tukeys <- D7_treat_comp %>% group_by(genome) %>% nest() %>% 
+  mutate(ANOVA=map(data, ~ aov(data=., iRep ~ treatment)), 
+         tuk = map(ANOVA, TukeyHSD), 
+         tid_tuk = map(tuk, tidy)) %>% 
+  select(genome, tid_tuk) %>% 
+  unnest(cols = tid_tuk) %>%
+  mutate(tuk_pval = adj.p.value, 
+         fdr.pval = p.adjust(tuk_pval, method = 'fdr'))
+
+sigs <- D7_tukeys %>%
+  select(-adj.p.value) %>% filter(tuk_pval < 0.05)
+
+sigs
+
+
+sigs_fdr <- sigs %>% filter(fdr.pval < 0.1)
+
+
+# only those bins with a sig difference detected in tukey's test
+dat %>% filter(genome %in% D7$genome & day %in% c('07'))%>% 
+  filter(genome %in% sigs$genome) %>% 
+  ggplot(aes(x=genome, y=iRep, fill=treatment)) +
+  geom_boxplot() +
+  geom_jitter(shape=21, position=position_dodge2(width = .75)) + 
+  ggtitle('iRep growth rate estimates at D7', 'tukey pval < 0.05 -- not adjusted for multiple tukeys') + theme_bw()
+
+dat %>% filter(genome %in% D7$genome & day %in% c('07'))%>% 
+  filter(genome %in% sigs_fdr$genome) %>% 
+  ggplot(aes(x=genome, y=iRep, fill=treatment)) +
+  geom_boxplot() +
+  geom_jitter(shape=21, position=position_dodge2(width = .75)) + 
+  ggtitle('iRep growth rate estimates at D7', 'fdr pval < 0.10') + theme_bw()
+
+D7_tukeys %>% #filter(comparison != 'ther-sub') %>% 
+  ggplot(aes(x=genome, y=estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high), width=.2) + 
+  coord_flip() + geom_hline(yintercept = 0, color='red') + 
+  ggtitle('95% confidence intervals for the difference in growth rate between treatments',
+          'negative estimates indicate higher growth rate in ctrl, D7 only')+ facet_wrap(~comparison)
+
+# mixed model? not super confident about this.
+summary(lmer(data = D7_treat_comp, formula = iRep ~ treatment + (1|genome)))
+
+checkm %>% filter(bin %in% sigs$genome) %>% select(bin, marker_lineage, Completeness, Contamination)
+
+###### DAY 35 DIFF BTWEEN GROUPS #######
+# only includes genomes with 4+ observations in all 3 treatment groups at D35
+# 11 genomes, 211 observations
+
+
+D35_treat_comp <- dat %>% filter(genome %in% D35$genome & day %in% c('35'))
+
+
+D35_treat_comp %>% ggplot(aes(x=treatment, y=iRep, fill=treatment)) +
+  geom_violin() + geom_jitter(shape=21, width = .2) + 
+  ggtitle('iRep growth rate estimates at D35') + theme_bw()
+
+dat %>% filter(genome %in% D35$genome & day %in% c('35'))%>% 
+  ggplot(aes(x=genome, y=iRep, fill=treatment)) + geom_boxplot() +
+  geom_jitter(shape=21, position=position_dodge2(width = .75)) +
+  ggtitle('iRep growth rate estimates at D35, by genome') + theme_bw()
+
+D35_tukeys <- D35_treat_comp %>% group_by(genome) %>% nest() %>% 
+  mutate(ANOVA=map(data, ~ aov(data=., iRep ~ treatment)), 
+         tuk = map(ANOVA, TukeyHSD), 
+         tid_tuk = map(tuk, tidy)) %>% 
+  select(genome, tid_tuk) %>% 
+  unnest(cols = tid_tuk) %>%
+  mutate(tuk_pval = adj.p.value, 
+         fdr.pval = p.adjust(tuk_pval, method = 'fdr')) 
+
+sigs <- D35_tukeys %>% 
+  select(-adj.p.value) %>% filter(tuk_pval < 0.05)
+
+# no sigs by anova/tukey
+
+
+D35_tukeys %>% #filter(comparison != 'ther-sub') %>% 
+  ggplot(aes(x=genome, y=estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high), width=.2) + 
+  coord_flip() + geom_hline(yintercept = 0, color='red') + 
+  ggtitle('95% confidence intervals for the difference in growth rate between treatments',
+          'negative estimates indicate higher growth rate in ctrl, D35 only')+ facet_wrap(~comparison)
+
+# mixed model? not super confident about this.
+summary(lmer(data = D35_treat_comp, formula = iRep ~ treatment + (1|genome)))
+
+# no treatment effect detectable at D35
+
+
+
+
+###### Day 78 Diff BTWEEN GROUPS ######
+# only includes genomes with 4+ observations in all 3 treatment groups at D35
+# 8 genomes, 147 observations
+
+dat %>% filter(genome %in% D78$genome & day %in% c('78'))%>% 
+  ggplot(aes(x=genome, y=iRep, fill=treatment)) + geom_boxplot() + geom_jitter(shape=21, position=position_dodge2(width = .75))
+
+
+D78_treat_comp <- dat %>% filter(genome %in% D78$genome & day %in% c('78'))
+
+
+
+D78_treat_comp %>% ggplot(aes(x=treatment, y=iRep, fill=treatment)) +
+  geom_violin() + geom_jitter(shape=21, width = .2) + 
+  ggtitle('iRep growth rate estimates at D78') + theme_bw()
+
+D78_treat_comp %>% 
+  ggplot(aes(x=genome, y=iRep, fill=treatment)) + geom_boxplot() +
+  geom_jitter(shape=21, position=position_dodge2(width = .75)) +
+  ggtitle('iRep growth rate estimates at D78, by genome') + theme_bw()
+
+D78_tukeys <- D78_treat_comp %>% group_by(genome) %>% nest() %>% 
+  mutate(ANOVA=map(data, ~ aov(data=., iRep ~ treatment)), 
+         tuk = map(ANOVA, TukeyHSD), 
+         tid_tuk = map(tuk, tidy)) %>% 
+  select(genome, tid_tuk) %>% 
+  unnest(cols = tid_tuk) %>%
+  mutate(tuk_pval = adj.p.value, 
+         fdr.pval = p.adjust(tuk_pval, method = 'fdr'))
+
+
+sigs <- D78_tukeys %>% 
+  select(-adj.p.value) %>% filter(tuk_pval < 0.05)
+
+
+D78_tukeys %>% filter(comparison != 'ther-sub') %>% 
+  ggplot(aes(x=genome, y=estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high), width=.2) + 
+  coord_flip() + geom_hline(yintercept = 0, color='red') + 
+  ggtitle('95% confidence intervals for the difference in growth rate between treatments',
+          'negative estimates indicate higher growth rate in ctrl, D35 only')+ facet_wrap(~comparison)
+
+# mixed model? not super confident about this.
+summary(lmer(data = D78_treat_comp, formula = iRep ~ treatment + (1|genome)))
+
+
+# small treatment effect detected, both sub and ther, but at this timepoint they are receiving equal doses.
+
+########### END TREATMENT EFFECT #########
+
 ### CONTROL ONLY DIFFERENCES BETWEEN GROWTH RATES AT D7 AND D35
-\f2\i0 \cf4 \cb3 \
+# only includes genomes with 4+ observations at both D7 and D35 in the control treatment only
+# 15 genomes 201 observations
 
-\f3\i \cf5 \cb3 # only includes genomes with 4+ observations at both D7 and D35 in the control treatment only
-\f2\i0 \cf4 \cb3 \
+dat %>% filter(genome %in% ctrl735$genome & day %in% c('07', '35')& treatment == 'ctrl')%>% 
+  ggplot(aes(x=day, y=iRep, fill=day)) +
+  geom_violin() +
+  ggtitle('iRep estimates at D7 and D35, control only', '15 genomes, 201 observations')
 
-\f3\i \cf5 \cb3 # 15 genomes 201 observations
-\f2\i0 \cf4 \cb3 \
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 ctrl735
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '07'\cf4 \cb3 , \cf6 \cb3 '35'\cf4 \cb3 )
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 treatment 
-\f1\b \cf9 \cb3 ==
-\f2\b0 \cf6  'ctrl'\cf4 \cb3 )
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 day, \cf7 \cb3 y=\cf4 \cb3 iRep, \cf7 \cb3 fill=\cf4 \cb3 day)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_violin
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep estimates at D7 and D35, control only'\cf4 \cb3 , \cf6 \cb3 '15 genomes, 201 observations'\cf4 \cb3 )\
-\
+# looks to be a trend to higher growth rates in d7 communities
 
-\f3\i \cf5 \cb3 # looks to be a trend to higher growth rates in d7 communities
-\f2\i0 \cf4 \cb3 \
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 ctrl735
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '07'\cf4 \cb3 , \cf6 \cb3 '35'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 treatment 
-\f1\b \cf9 \cb3 ==
-\f2\b0 \cf6  'ctrl'\cf4 \cb3 )
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 genome, \cf7 \cb3 y=\cf4 \cb3 iRep, \cf7 \cb3 fill=\cf4 \cb3 day)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_boxplot
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep estimates at D7 and D35, control only'\cf4 \cb3 , \cf6 \cb3 '15 genomes, 201 observations'\cf4 \cb3 )\
-\
-ctrl735_dat <-\cf6 \cb3  \cf4 \cb3 dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 ctrl735
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '07'\cf4 \cb3 , \cf6 \cb3 '35'\cf4 \cb3 )
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 treatment 
-\f1\b \cf9 \cb3 ==
-\f2\b0 \cf6  'ctrl'\cf4 \cb3 )\
-\
-ctrl735_tests <-\cf6 \cb3  \cf4 \cb3 dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 ctrl735
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '07'\cf4 \cb3 , \cf6 \cb3 '35'\cf4 \cb3 )
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 treatment 
-\f1\b \cf9 \cb3 ==
-\f2\b0 \cf6  'ctrl'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 group_by
-\f2\b0 \cf4 \cb3 (genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 nest
-\f2\b0 \cf4 \cb3 ()\
-\
-\
+dat %>% filter(genome %in% ctrl735$genome & day %in% c('07', '35') & treatment == 'ctrl')%>% 
+  ggplot(aes(x=genome, y=iRep, fill=day)) + geom_boxplot() +
+  ggtitle('iRep estimates at D7 and D35, control only', '15 genomes, 201 observations')
 
-\f3\i \cf5 \cb3 # fit a simple linear model on each genome
-\f2\i0 \cf4 \cb3 \
+ctrl735_dat <- dat %>% filter(genome %in% ctrl735$genome & day %in% c('07', '35')& treatment == 'ctrl')
 
-\f3\i \cf5 \cb3 # ctrl735_lms <- ctrl735_tests %>% mutate(lms=map(data, ~ lm(data=. , formula = iRep ~ day)), 
-\f2\i0 \cf4 \cb3 \
+ctrl735_tests <- dat %>% 
+  filter(genome %in% ctrl735$genome & day %in% c('07', '35')& treatment == 'ctrl') %>%
+  group_by(genome) %>%
+  nest()
 
-\f3\i \cf5 \cb3 #                        tid_sum = map(lms, tidy)) %>% select(genome, tid_sum) %>% 
-\f2\i0 \cf4 \cb3 \
 
-\f3\i \cf5 \cb3 #   unnest(cols = c('tid_sum'))#%>% filter(term == 'day35' & p.value < 0.05)
-\f2\i0 \cf4 \cb3 \
+# fit a simple linear model on each genome
+# ctrl735_lms <- ctrl735_tests %>% mutate(lms=map(data, ~ lm(data=. , formula = iRep ~ day)), 
+#                        tid_sum = map(lms, tidy)) %>% select(genome, tid_sum) %>% 
+#   unnest(cols = c('tid_sum'))#%>% filter(term == 'day35' & p.value < 0.05)
+# 
+# ctrl735_lms %>%
+#   filter(term == 'day35' & p.value < 0.05)
 
-\f3\i \cf5 \cb3 # 
-\f2\i0 \cf4 \cb3 \
+# Of the 15 genomes, there is evidence that 5 of them have lower growth rates at d35 relative to D7
 
-\f3\i \cf5 \cb3 # ctrl735_lms %>%
-\f2\i0 \cf4 \cb3 \
 
-\f3\i \cf5 \cb3 #   filter(term == 'day35' & p.value < 0.05)
-\f2\i0 \cf4 \cb3 \
-\
+# ANOVA for each genome
 
-\f3\i \cf5 \cb3 # Of the 15 genomes, there is evidence that 5 of them have lower growth rates at d35 relative to D7
-\f2\i0 \cf4 \cb3 \
-\
-\
+ctrl735_tuk <- ctrl735_tests %>% 
+  mutate(ANOVA=map(data, ~ aov(data=., iRep ~ day)), 
+         tuk = map(ANOVA, TukeyHSD), 
+         tid_tuk = map(tuk, tidy)) %>% 
+  select(genome, tid_tuk) %>% 
+  unnest(cols = tid_tuk) %>%
+  mutate(tuk_pval = adj.p.value, 
+         fdr.pval = p.adjust(tuk_pval, method = 'fdr')) %>% 
+  select(-adj.p.value) #%>% filter(tuk_pval < 0.05)
 
-\f3\i \cf5 \cb3 # ANOVA for each genome
-\f2\i0 \cf4 \cb3 \
-\
-ctrl735_tuk <-\cf6 \cb3  \cf4 \cb3 ctrl735_tests 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 ANOVA=
-\f1\b map
-\f2\b0 \cf4 \cb3 (data, 
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf6  
-\f1\b \cf7 aov
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 data=\cf4 \cb3 ., iRep 
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf6  \cf4 \cb3 day)), \
-         \cf7 \cb3 tuk =\cf4 \cb3  
-\f1\b \cf7 \cb3 map
-\f2\b0 \cf4 \cb3 (ANOVA, TukeyHSD), \
-         \cf7 \cb3 tid_tuk =\cf4 \cb3  
-\f1\b \cf7 \cb3 map
-\f2\b0 \cf4 \cb3 (tuk, tidy)) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome, tid_tuk) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 unnest
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 cols =\cf4 \cb3  tid_tuk) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 tuk_pval =\cf4 \cb3  adj.p.value, \
-         \cf7 \cb3 fdr.pval =\cf4 \cb3  
-\f1\b \cf7 \cb3 p.adjust
-\f2\b0 \cf4 \cb3 (tuk_pval, \cf7 \cb3 method =\cf4 \cb3  \cf6 \cb3 'fdr'\cf4 \cb3 )) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 adj.p.value) 
-\f3\i \cf5 \cb3 #%>% filter(tuk_pval < 0.05)
-\f2\i0 \cf4 \cb3 \
-\
-ctrl735_tuk 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (tuk_pval 
-\f1\b \cf9 \cb3 <
-\f2\b0 \cf6  \cf8 0.05\cf4 \cb3 )\
-\
-\
-ctrl735_tuk 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 genome, \cf7 \cb3 y=\cf4 \cb3 estimate)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_point
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_errorbar
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 ymin=\cf4 \cb3 conf.low, \cf7 \cb3 ymax=\cf4 \cb3 conf.high), \cf7 \cb3 width=\cf4 \cb3 .\cf8 \cb3 2\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 coord_flip
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_hline
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 yintercept =\cf4 \cb3  \cf8 \cb3 0\cf4 \cb3 , \cf7 \cb3 color=\cf6 'red'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '95% confidence intervals for the difference in growth rate between D7 and D35'\cf4 \cb3 ,\
-          \cf6 \cb3 'negative estimates indicate higher growth rate at D7, Control treatment only'\cf4 \cb3 )\
-\
+ctrl735_tuk %>% 
+  filter(tuk_pval < 0.05)
 
-\f1\b \cf7 \cb3 summary
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 lmer
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 data =\cf4 \cb3  ctrl735_dat, \cf7 \cb3 formula =\cf4 \cb3  iRep 
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 (\cf8 \cb3 1
-\f1\b \cf9 |
-\f2\b0 \cf4 \cb3 genome)))\
-\
-\
 
-\f3\i \cf5 \cb3 # Time effect detectable in the control group.  Lower growth-rate at D35 compared to D7 
-\f2\i0 \cf4 \cb3 \
-\
-\
+ctrl735_tuk %>%
+  ggplot(aes(x=genome, y=estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high), width=.2) + 
+  coord_flip() + geom_hline(yintercept = 0, color='red') + 
+  ggtitle('95% confidence intervals for the difference in growth rate between D7 and D35',
+          'negative estimates indicate higher growth rate at D7, Control treatment only')
 
-\f3\i \cf5 \cb3 ### SUBTHER ONLY DIFFERENCES BETWEEN GROWTH RATES AT D7 AND D35
-\f2\i0 \cf4 \cb3 \
+summary(lmer(data = ctrl735_dat, formula = iRep ~ day + (1|genome)))
 
-\f3\i \cf5 \cb3 # only includes genomes with 4+ observations at both D7 and D35 in the control treatment only
-\f2\i0 \cf4 \cb3 \
 
-\f3\i \cf5 \cb3 # 8 genomes 94 observations
-\f2\i0 \cf4 \cb3 \
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 sub735
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '07'\cf4 \cb3 , \cf6 \cb3 '35'\cf4 \cb3 )
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 treatment 
-\f1\b \cf9 \cb3 ==
-\f2\b0 \cf6  'sub'\cf4 \cb3 )
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 genome, \cf7 \cb3 y=\cf4 \cb3 iRep, \cf7 \cb3 fill=\cf4 \cb3 day)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_boxplot
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep estimates at D7 and D35, sub only'\cf4 \cb3 , \cf6 \cb3 '8 genomes, 94 observations'\cf4 \cb3 )\
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 sub735
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '07'\cf4 \cb3 , \cf6 \cb3 '35'\cf4 \cb3 )
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 treatment 
-\f1\b \cf9 \cb3 ==
-\f2\b0 \cf6  'sub'\cf4 \cb3 )
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 day, \cf7 \cb3 y=\cf4 \cb3 iRep, \cf7 \cb3 fill=\cf4 \cb3 day)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_violin
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep estimates at D7 and D35, sub only'\cf4 \cb3 , \cf6 \cb3 '8 genomes, 94 observations'\cf4 \cb3 )\
-\
+# Time effect detectable in the control group.  Lower growth-rate at D35 compared to D7 
 
-\f3\i \cf5 \cb3 # dat$treatment
-\f2\i0 \cf4 \cb3 \
-sub735_dat <-\cf6 \cb3  \cf4 \cb3 dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 sub735
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '07'\cf4 \cb3 , \cf6 \cb3 '35'\cf4 \cb3 )
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 treatment 
-\f1\b \cf9 \cb3 ==
-\f2\b0 \cf6  'sub'\cf4 \cb3 )\
-\
-\
-sub735_tests <-\cf6 \cb3  \cf4 \cb3 dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 sub735
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '07'\cf4 \cb3 , \cf6 \cb3 '35'\cf4 \cb3 )
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 treatment 
-\f1\b \cf9 \cb3 ==
-\f2\b0 \cf6  'sub'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 group_by
-\f2\b0 \cf4 \cb3 (genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 nest
-\f2\b0 \cf4 \cb3 ()\
-\
-\
 
-\f3\i \cf5 \cb3 # ANOVA for each genome
-\f2\i0 \cf4 \cb3 \
-\
-sub735_tuk <-\cf6 \cb3  \cf4 \cb3 sub735_tests 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 ANOVA=
-\f1\b map
-\f2\b0 \cf4 \cb3 (data, 
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf6  
-\f1\b \cf7 aov
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 data=\cf4 \cb3 ., iRep 
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf6  \cf4 \cb3 day)), \
-         \cf7 \cb3 tuk =\cf4 \cb3  
-\f1\b \cf7 \cb3 map
-\f2\b0 \cf4 \cb3 (ANOVA, TukeyHSD), \
-         \cf7 \cb3 tid_tuk =\cf4 \cb3  
-\f1\b \cf7 \cb3 map
-\f2\b0 \cf4 \cb3 (tuk, tidy)) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome, tid_tuk) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 unnest
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 cols =\cf4 \cb3  tid_tuk) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 tuk_pval =\cf4 \cb3  adj.p.value, \
-         \cf7 \cb3 fdr.pval =\cf4 \cb3  
-\f1\b \cf7 \cb3 p.adjust
-\f2\b0 \cf4 \cb3 (tuk_pval, \cf7 \cb3 method =\cf4 \cb3  \cf6 \cb3 'fdr'\cf4 \cb3 )) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 adj.p.value) 
-\f3\i \cf5 \cb3 #%>% filter(tuk_pval < 0.05)
-\f2\i0 \cf4 \cb3 \
-\
-sub735_tuk 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (tuk_pval 
-\f1\b \cf9 \cb3 <
-\f2\b0 \cf6  \cf8 0.05\cf4 \cb3 )\
-\
-sub735_tuk 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 genome, \cf7 \cb3 y=\cf4 \cb3 estimate)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_point
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_errorbar
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 ymin=\cf4 \cb3 conf.low, \cf7 \cb3 ymax=\cf4 \cb3 conf.high), \cf7 \cb3 width=\cf4 \cb3 .\cf8 \cb3 2\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 coord_flip
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_hline
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 yintercept =\cf4 \cb3  \cf8 \cb3 0\cf4 \cb3 , \cf7 \cb3 color=\cf6 'red'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '95% confidence intervals for the difference in growth rate between D7 and D35'\cf4 \cb3 ,\
-          \cf6 \cb3 'negative estimates indicate higher growth rate at D7, Control treatment only'\cf4 \cb3 )\
-\
+### SUBTHER ONLY DIFFERENCES BETWEEN GROWTH RATES AT D7 AND D35
+# only includes genomes with 4+ observations at both D7 and D35 in the control treatment only
+# 8 genomes 94 observations
+dat %>% filter(genome %in% sub735$genome & day %in% c('07', '35')& treatment == 'sub')%>% 
+  ggplot(aes(x=genome, y=iRep, fill=day)) + geom_boxplot() +
+  ggtitle('iRep estimates at D7 and D35, sub only', '8 genomes, 94 observations')
 
-\f1\b \cf7 \cb3 summary
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 lmer
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 data =\cf4 \cb3  sub735_dat, \cf7 \cb3 formula =\cf4 \cb3  iRep 
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 (\cf8 \cb3 1
-\f1\b \cf9 |
-\f2\b0 \cf4 \cb3 genome)))\
-\
+dat %>% filter(genome %in% sub735$genome & day %in% c('07', '35')& treatment == 'sub')%>% 
+  ggplot(aes(x=day, y=iRep, fill=day)) + geom_violin() +
+  ggtitle('iRep estimates at D7 and D35, sub only', '8 genomes, 94 observations')
 
-\f3\i \cf5 \cb3 # Time effect detectable in the sub group.  Lower growth-rate at D35 compared to D7 
-\f2\i0 \cf4 \cb3 \
-\
-\
+# dat$treatment
+sub735_dat <- dat %>% filter(genome %in% sub735$genome & day %in% c('07', '35')& treatment == 'sub')
 
-\f3\i \cf5 \cb3 ### THER ONLY DIFFERENCES BETWEEN GROWTH RATES AT D7 AND D35
-\f2\i0 \cf4 \cb3 \
 
-\f3\i \cf5 \cb3 # only includes genomes with 4+ observations at both D7 and D35 in the control treatment only
-\f2\i0 \cf4 \cb3 \
+sub735_tests <- dat %>% 
+  filter(genome %in% sub735$genome & day %in% c('07', '35')& treatment == 'sub') %>%
+  group_by(genome) %>%
+  nest()
 
-\f3\i \cf5 \cb3 # 11 genomes 131 observations
-\f2\i0 \cf4 \cb3 \
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 ther735
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '07'\cf4 \cb3 , \cf6 \cb3 '35'\cf4 \cb3 )
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 treatment 
-\f1\b \cf9 \cb3 ==
-\f2\b0 \cf6  'ther'\cf4 \cb3 )
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 genome, \cf7 \cb3 y=\cf4 \cb3 iRep, \cf7 \cb3 fill=\cf4 \cb3 day)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_boxplot
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep estimates at D7 and D35, ther only'\cf4 \cb3 , \cf6 \cb3 '11 genomes, 131 observations'\cf4 \cb3 )\
-\
-dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 ther735
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '07'\cf4 \cb3 , \cf6 \cb3 '35'\cf4 \cb3 )
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 treatment 
-\f1\b \cf9 \cb3 ==
-\f2\b0 \cf6  'ther'\cf4 \cb3 )
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 day, \cf7 \cb3 y=\cf4 \cb3 iRep, \cf7 \cb3 fill=\cf4 \cb3 day)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_violin
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 'iRep estimates at D7 and D35, ther only'\cf4 \cb3 , \cf6 \cb3 '11 genomes, 131 observations'\cf4 \cb3 )\
-\
 
-\f3\i \cf5 \cb3 # dat$treatment
-\f2\i0 \cf4 \cb3 \
-ther735_dat <-\cf6 \cb3  \cf4 \cb3 dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 ther735
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '07'\cf4 \cb3 , \cf6 \cb3 '35'\cf4 \cb3 )
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 treatment 
-\f1\b \cf9 \cb3 ==
-\f2\b0 \cf6  'ther'\cf4 \cb3 )\
-\
-\
-ther735_tests <-\cf6 \cb3  \cf4 \cb3 dat 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (genome 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  \cf4 \cb3 ther735
-\f1\b \cf9 \cb3 $
-\f2\b0 \cf4 \cb3 genome 
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 %in%
-\f2\b0 \cf6  
-\f1\b \cf7 c
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '07'\cf4 \cb3 , \cf6 \cb3 '35'\cf4 \cb3 )
-\f1\b \cf9 \cb3 &
-\f2\b0 \cf6  \cf4 \cb3 treatment 
-\f1\b \cf9 \cb3 ==
-\f2\b0 \cf6  'ther'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 group_by
-\f2\b0 \cf4 \cb3 (genome) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 nest
-\f2\b0 \cf4 \cb3 ()\
-\
-\
-\
+# ANOVA for each genome
 
-\f3\i \cf5 \cb3 # ANOVA for each genome
-\f2\i0 \cf4 \cb3 \
-\
-ther735_tuk <-\cf6 \cb3  \cf4 \cb3 ther735_tests 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 ANOVA=
-\f1\b map
-\f2\b0 \cf4 \cb3 (data, 
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf6  
-\f1\b \cf7 aov
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 data=\cf4 \cb3 ., iRep 
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf6  \cf4 \cb3 day)), \
-         \cf7 \cb3 tuk =\cf4 \cb3  
-\f1\b \cf7 \cb3 map
-\f2\b0 \cf4 \cb3 (ANOVA, TukeyHSD), \
-         \cf7 \cb3 tid_tuk =\cf4 \cb3  
-\f1\b \cf7 \cb3 map
-\f2\b0 \cf4 \cb3 (tuk, tidy)) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (genome, tid_tuk) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 unnest
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 cols =\cf4 \cb3  tid_tuk) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 mutate
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 tuk_pval =\cf4 \cb3  adj.p.value, \
-         \cf7 \cb3 fdr.pval =\cf4 \cb3  
-\f1\b \cf7 \cb3 p.adjust
-\f2\b0 \cf4 \cb3 (tuk_pval, \cf7 \cb3 method =\cf4 \cb3  \cf6 \cb3 'fdr'\cf4 \cb3 )) 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 select
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf9 \cb3 -
-\f2\b0 \cf4 \cb3 adj.p.value) 
-\f3\i \cf5 \cb3 #%>% filter(tuk_pval < 0.05)
-\f2\i0 \cf4 \cb3 \
-\
-ther735_tuk 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 filter
-\f2\b0 \cf4 \cb3 (tuk_pval 
-\f1\b \cf9 \cb3 <
-\f2\b0 \cf6  \cf8 0.05\cf4 \cb3 )\
-\
+sub735_tuk <- sub735_tests %>% 
+  mutate(ANOVA=map(data, ~ aov(data=., iRep ~ day)), 
+         tuk = map(ANOVA, TukeyHSD), 
+         tid_tuk = map(tuk, tidy)) %>% 
+  select(genome, tid_tuk) %>% 
+  unnest(cols = tid_tuk) %>%
+  mutate(tuk_pval = adj.p.value, 
+         fdr.pval = p.adjust(tuk_pval, method = 'fdr')) %>% 
+  select(-adj.p.value) #%>% filter(tuk_pval < 0.05)
 
-\f3\i \cf5 \cb3 # Of the 11 genomes, there is evidence that 0 of them have lower growth rates at d35 relative to D7
-\f2\i0 \cf4 \cb3 \
-\
-\
-\
-ther735_tuk 
-\f1\b \cf9 \cb3 %>%
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggplot
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 x=\cf4 \cb3 genome, \cf7 \cb3 y=\cf4 \cb3 estimate)) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_point
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 geom_errorbar
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 aes
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 ymin=\cf4 \cb3 conf.low, \cf7 \cb3 ymax=\cf4 \cb3 conf.high), \cf7 \cb3 width=\cf4 \cb3 .\cf8 \cb3 2\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 coord_flip
-\f2\b0 \cf4 \cb3 () 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  
-\f1\b \cf7 geom_hline
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 yintercept =\cf4 \cb3  \cf8 \cb3 0\cf4 \cb3 , \cf7 \cb3 color=\cf6 'red'\cf4 \cb3 ) 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 \
-\cf6 \cb3   
-\f1\b \cf7 ggtitle
-\f2\b0 \cf4 \cb3 (\cf6 \cb3 '95% confidence intervals for the difference in growth rate between D7 and D35'\cf4 \cb3 ,\
-          \cf6 \cb3 'negative estimates indicate higher growth rate at D7, Therapeutic treatment only'\cf4 \cb3 )\
-\
+sub735_tuk %>% 
+  filter(tuk_pval < 0.05)
 
-\f1\b \cf7 \cb3 summary
-\f2\b0 \cf4 \cb3 (
-\f1\b \cf7 \cb3 lmer
-\f2\b0 \cf4 \cb3 (\cf7 \cb3 data =\cf4 \cb3  ther735_dat, \cf7 \cb3 formula =\cf4 \cb3  iRep 
-\f1\b \cf9 \cb3 ~
-\f2\b0 \cf6  \cf4 \cb3 day 
-\f1\b \cf9 \cb3 +
-\f2\b0 \cf6  \cf4 \cb3 (\cf8 \cb3 1
-\f1\b \cf9 |
-\f2\b0 \cf4 \cb3 genome)))\
-\
-\
-\
-##############################################\
-\
-\
-\
-dat_QC <- read_tsv(\cf11 'iRep_estimates_QCd.tsv'\cf4 ) |> \
-  mutate(day=factor(day, levels = c(\cf11 '07'\cf4 , \cf11 '35'\cf4 , \cf11 '78'\cf4 )), \
-         treatment=factor(treatment, levels = c(\cf11 'ctrl'\cf4 , \cf11 'sub'\cf4 , \cf11 'ther'\cf4 )))\
-\
-\
-bins_only_in_one_treatment <- \
-  dat_QC |>\
-  group_by(treatment, genome) |>\
-  tally() |>\
-  group_by(genome) |>\
-  tally() |> \
-  filter(n==\cf12 \cb3 1\cf4 \cb3 ) |> pull(genome)\
-\
-bins_only_in_one_timepoint <- \
-  dat_QC |>\
-  group_by(day, genome) |>\
-  tally() |>\
-  group_by(genome) |>\
-  tally() |> \
-  filter(n==\cf12 \cb3 1\cf4 \cb3 ) |> pull(genome)\
-\
-bins_one_treatment_one_timepoint <- \
-  bins_only_in_one_timepoint %
-\f1\b \cf2 in
-\f2\b0 \cf4 % bins_only_in_one_treatment\
-\
-\pard\pardeftab720\partightenfactor0
+sub735_tuk %>%
+  ggplot(aes(x=genome, y=estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high), width=.2) + 
+  coord_flip() + geom_hline(yintercept = 0, color='red') + 
+  ggtitle('95% confidence intervals for the difference in growth rate between D7 and D35',
+          'negative estimates indicate higher growth rate at D7, Control treatment only')
 
-\f3\i \cf13 \cb3 # these bins were only detected in one treatment in one timepoint
-\f2\i0 \cf4 \cb3 \
-bad_bins <- bins_only_in_one_timepoint[bins_one_treatment_one_timepoint]\
-\
-dat_QC <- dat_QC |> filter(!(genome %
-\f1\b \cf2 in
-\f2\b0 \cf4 % bad_bins))\
-\
-\
+summary(lmer(data = sub735_dat, formula = iRep ~ day + (1|genome)))
 
-\f3\i \cf13 \cb3 # model selection
-\f2\i0 \cf4 \cb3 \
+# Time effect detectable in the sub group.  Lower growth-rate at D35 compared to D7 
 
-\f3\i \cf13 \cb3 # compare a simple model with one with interactions
-\f2\i0 \cf4 \cb3 \
-mod_simple <- lmer(data=dat_QC, formula = iRep ~ treatment + day + (\cf12 \cb3 1\cf4 \cb3 |genome))\
-mod_interact <- lmer(data=dat_QC, formula = iRep ~ treatment * day + (\cf12 \cb3 1\cf4 \cb3 |genome))\
-\
-summary(mod_simple)\
-\
-summary(mod_interact)\
-\
 
-\f3\i \cf13 \cb3 # some of the interaction coefs are significant, ther group prob has different 
-\f2\i0 \cf4 \cb3 \
+### THER ONLY DIFFERENCES BETWEEN GROWTH RATES AT D7 AND D35
+# only includes genomes with 4+ observations at both D7 and D35 in the control treatment only
+# 11 genomes 131 observations
 
-\f3\i \cf13 \cb3 # behavior over time 
-\f2\i0 \cf4 \cb3 \
-\
-anova(mod_simple, mod_interact)\
-\
+dat %>% filter(genome %in% ther735$genome & day %in% c('07', '35')& treatment == 'ther')%>% 
+  ggplot(aes(x=genome, y=iRep, fill=day)) + geom_boxplot() +
+  ggtitle('iRep estimates at D7 and D35, ther only', '11 genomes, 131 observations')
 
-\f3\i \cf13 \cb3 # interaction model fits the data better
-\f2\i0 \cf4 \cb3 \
-\
+dat %>% filter(genome %in% ther735$genome & day %in% c('07', '35')& treatment == 'ther')%>% 
+  ggplot(aes(x=day, y=iRep, fill=day)) + geom_violin() +
+  ggtitle('iRep estimates at D7 and D35, ther only', '11 genomes, 131 observations')
 
-\f3\i \cf13 \cb3 # residuals look ok
-\f2\i0 \cf4 \cb3 \
-plot(mod_interact)\
-\
-treatment_effects <- emmeans(mod_interact, ~ treatment | day) %>%\
-  contrast(method=\cf11 'revpairwise'\cf4 , adjust=\cf11 'fdr'\cf4 )\
-\
-time_effects <- emmeans(mod_interact, ~ day | treatment) %>%\
-  contrast(method=\cf11 'pairwise'\cf4 , adjust=\cf11 'fdr'\cf4 ) \
-\
-\
-all_effects <- rbind(treatment_effects, time_effects) %>%\
-  tidy(conf.int=\cf14 \cb3 T\cf4 \cb3 ) |> \
-  mutate(contrast=factor(contrast))\
-\
-\
-daily_means <- emmeans(mod_interact, ~ treatment | day) %>% tidy(conf.int=\cf14 \cb3 T\cf4 \cb3 )\
-\
-col_scheme <- c(ther=\cf11 '#E41A1C'\cf4 , sub=\cf11 '#377EB8'\cf4 , ctrl=\cf11 '#4DAF4A'\cf4 )\
-col_scheme2 <- c(`ther - ctrl`=\cf11 '#E41A1C'\cf4 , `sub - ctrl`=\cf11 '#377EB8'\cf4 )\
-\
-daily_means_lines <- \
-  daily_means %>% \
-  ggplot(aes(x=day, y=estimate,fill=treatment,\
-             ymin=conf.low, ymax=conf.high, group=treatment, color=treatment)) + \
-  geom_line(size=\cf12 \cb3 1.25\cf4 \cb3 , alpha=\cf12 \cb3 .9\cf4 \cb3 ) + \
-  geom_errorbar(size=\cf12 \cb3 1\cf4 \cb3 , width=\cf12 \cb3 .2\cf4 \cb3 , position=position_dodge(width = \cf12 \cb3 .1\cf4 \cb3 ))+\
-  geom_point(shape=\cf12 \cb3 21\cf4 \cb3 , size=\cf12 \cb3 4\cf4 \cb3 , color=\cf11 'black'\cf4 , position=position_dodge(width = \cf12 \cb3 .1\cf4 \cb3 )) + \
-  theme_cowplot()+ \
-  theme(panel.grid.major = element_line(color=\cf11 'grey'\cf4 )) +\
-  ylab(\cf11 'estimated iRep growth rate'\cf4 ) + \
-  scale_color_manual(values = col_scheme)+\
-  scale_fill_manual(values = col_scheme)\
-\
-treat_effect2 <- \
-  all_effects |>\
-  filter(contrast %
-\f1\b \cf2 in
-\f2\b0 \cf4 % c(\cf11 'sub - ctrl'\cf4 , \cf11 'ther - ctrl'\cf4 )) |>\
-  ggplot(aes(x=day,color=contrast, y=estimate, ymin=conf.low, ymax=conf.high)) + \
-  geom_linerange(position=position_dodge(width = \cf12 \cb3 .51\cf4 \cb3 ), size=\cf12 \cb3 1.25\cf4 \cb3 , ) + \
-  geom_point(aes(fill=contrast),position=position_dodge(width = \cf12 \cb3 .51\cf4 \cb3 ), shape=\cf12 \cb3 21\cf4 \cb3 , size=\cf12 \cb3 4\cf4 \cb3 , color=\cf11 'black'\cf4 )+\
-  geom_hline(yintercept = \cf12 \cb3 0\cf4 \cb3 )+ \
-  theme_cowplot() + \
-  theme(panel.grid.major = element_line(color=\cf11 'grey'\cf4 ))+\
-  ylab(\cf11 'difference in iRep relative to control'\cf4 ) +\
-  ggtitle(\cf11 'Treatment contrasts within each timepoint'\cf4 )+ \
-  ylim(-\cf12 \cb3 .3\cf4 \cb3 , \cf12 \cb3 .1\cf4 \cb3 ) +\
-  scale_fill_manual(values=col_scheme2)+\
-  scale_color_manual(values=col_scheme2)\
-\
-plot_grid(daily_means_lines, treat_effect2, align = c(\cf11 'v'\cf4 ), ncol=\cf12 \cb3 1\cf4 \cb3 )\
-\
-}
+# dat$treatment
+ther735_dat <- dat %>% filter(genome %in% ther735$genome & day %in% c('07', '35')& treatment == 'ther')
+
+
+ther735_tests <- dat %>% 
+  filter(genome %in% ther735$genome & day %in% c('07', '35')& treatment == 'ther') %>%
+  group_by(genome) %>%
+  nest()
+
+
+
+# ANOVA for each genome
+
+ther735_tuk <- ther735_tests %>% 
+  mutate(ANOVA=map(data, ~ aov(data=., iRep ~ day)), 
+         tuk = map(ANOVA, TukeyHSD), 
+         tid_tuk = map(tuk, tidy)) %>% 
+  select(genome, tid_tuk) %>% 
+  unnest(cols = tid_tuk) %>%
+  mutate(tuk_pval = adj.p.value, 
+         fdr.pval = p.adjust(tuk_pval, method = 'fdr')) %>% 
+  select(-adj.p.value) #%>% filter(tuk_pval < 0.05)
+
+ther735_tuk %>% 
+  filter(tuk_pval < 0.05)
+
+# Of the 11 genomes, there is evidence that 0 of them have lower growth rates at d35 relative to D7
+
+
+
+ther735_tuk %>%
+  ggplot(aes(x=genome, y=estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high), width=.2) + 
+  coord_flip() + geom_hline(yintercept = 0, color='red') + 
+  ggtitle('95% confidence intervals for the difference in growth rate between D7 and D35',
+          'negative estimates indicate higher growth rate at D7, Therapeutic treatment only')
+
+summary(lmer(data = ther735_dat, formula = iRep ~ day + (1|genome)))
+
+
+
+##############################################
+
+
+
+dat_QC <- read_tsv('iRep_estimates_QCd.tsv') |> 
+  mutate(day=factor(day, levels = c('07', '35', '78')), 
+         treatment=factor(treatment, levels = c('ctrl', 'sub', 'ther')))
+
+
+bins_only_in_one_treatment <- 
+  dat_QC |>
+  group_by(treatment, genome) |>
+  tally() |>
+  group_by(genome) |>
+  tally() |> 
+  filter(n==1) |> pull(genome)
+
+bins_only_in_one_timepoint <- 
+  dat_QC |>
+  group_by(day, genome) |>
+  tally() |>
+  group_by(genome) |>
+  tally() |> 
+  filter(n==1) |> pull(genome)
+
+bins_one_treatment_one_timepoint <- 
+  bins_only_in_one_timepoint %in% bins_only_in_one_treatment
+
+# these bins were only detected in one treatment in one timepoint
+bad_bins <- bins_only_in_one_timepoint[bins_one_treatment_one_timepoint]
+
+dat_QC <- dat_QC |> filter(!(genome %in% bad_bins))
+
+
+# model selection
+# compare a simple model with one with interactions
+mod_simple <- lmer(data=dat_QC, formula = iRep ~ treatment + day + (1|genome))
+mod_interact <- lmer(data=dat_QC, formula = iRep ~ treatment * day + (1|genome))
+
+summary(mod_simple)
+
+summary(mod_interact)
+
+# some of the interaction coefs are significant, ther group prob has different 
+# behavior over time 
+
+anova(mod_simple, mod_interact)
+
+# interaction model fits the data better
+
+# residuals look ok
+plot(mod_interact)
+
+treatment_effects <- emmeans(mod_interact, ~ treatment | day) %>%
+  contrast(method='revpairwise', adjust='fdr')
+
+time_effects <- emmeans(mod_interact, ~ day | treatment) %>%
+  contrast(method='pairwise', adjust='fdr') 
+
+
+all_effects <- rbind(treatment_effects, time_effects) %>%
+  tidy(conf.int=T) |> 
+  mutate(contrast=factor(contrast))
+
+
+daily_means <- emmeans(mod_interact, ~ treatment | day) %>% tidy(conf.int=T)
+
+col_scheme <- c(ther='#E41A1C', sub='#377EB8', ctrl='#4DAF4A')
+col_scheme2 <- c(`ther - ctrl`='#E41A1C', `sub - ctrl`='#377EB8')
+
+daily_means_lines <- 
+  daily_means %>% 
+  ggplot(aes(x=day, y=estimate,fill=treatment,
+             ymin=conf.low, ymax=conf.high, group=treatment, color=treatment)) + 
+  geom_line(size=1.25, alpha=.9) + 
+  geom_errorbar(size=1, width=.2, position=position_dodge(width = .1))+
+  geom_point(shape=21, size=4, color='black', position=position_dodge(width = .1)) + 
+  theme_cowplot()+ 
+  theme(panel.grid.major = element_line(color='grey')) +
+  ylab('estimated iRep growth rate') + 
+  scale_color_manual(values = col_scheme)+
+  scale_fill_manual(values = col_scheme)
+
+treat_effect2 <- 
+  all_effects |>
+  filter(contrast %in% c('sub - ctrl', 'ther - ctrl')) |>
+  ggplot(aes(x=day,color=contrast, y=estimate, ymin=conf.low, ymax=conf.high)) + 
+  geom_linerange(position=position_dodge(width = .51), size=1.25, ) + 
+  geom_point(aes(fill=contrast),position=position_dodge(width = .51), shape=21, size=4, color='black')+
+  geom_hline(yintercept = 0)+ 
+  theme_cowplot() + 
+  theme(panel.grid.major = element_line(color='grey'))+
+  ylab('difference in iRep relative to control') +
+  ggtitle('Treatment contrasts within each timepoint')+ 
+  ylim(-.3, .1) +
+  scale_fill_manual(values=col_scheme2)+
+  scale_color_manual(values=col_scheme2)
+
+plot_grid(daily_means_lines, treat_effect2, align = c('v'), ncol=1)
+

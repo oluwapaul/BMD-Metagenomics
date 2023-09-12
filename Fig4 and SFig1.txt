@@ -4,6 +4,69 @@ Below is the link to the original githut repository
 https://github.com/Jtrachsel/p_t_meta
 ######################################
 
+#####################################
+## Calculate growth rate for good bins  
+  
+* iRep is not installed system wide on CERES, but it can be easily installed using conda.  
+* Most of the work is done, we can actually use the sam files generated prior to metabat to calculate the coverage patterns of the good bins.  
+* The following script is a template for running iRep. It is named iREP7_template.SLURM and is available in the SLURM directory.  
+* You can generate SLURM scripts for each sample using the same kind of loop that was discussed earlier.  
+
+
+
+
+#!/bin/bash
+
+#SBATCH --job-name="SAMPLE"                             # name of the job submitted
+#SBATCH -p short                                        # name of the queue you are submitting to
+#SBATCH -n 8                                            # number of cores/tasks 
+#SBATCH -N 1
+#SBATCH --mem=100G                                      # memory allocation
+#SBATCH -t 47:00:00                                     # time allocated for this job hours:mins:seconds
+#SBATCH --mail-user=YOUREMAIL@email.com                 # will receive an email when job fails
+#SBATCH --mail-type=FAIL                                # will receive an email when job fails
+#SBATCH -o "stdout.%j.%N"                               # standard out %j adds job number to outputfile name and %N adds the node name
+#SBATCH -e "stderr.%j.%N"                               # optional but it prints our standard error
+
+# ENTER COMMANDS HERE:
+
+# activate the conda environment
+source ~/iREP/bin/activate
+
+gunzip SAMPLE_mapped.sam.gz
+
+# allows iRep to tolerate 7 mismatches, over ~150bp reads this is about 95%
+iRep -f *.fa -s SAMPLE_mapped.sam -o SAMPLE.out -mm 7 -t 8 --no-plot --sort
+
+
+
+* Once all these jobs complete we will compile all the results into one file.  
+
+
+#!/bin/bash
+
+#SBATCH --job-name="7_compile"                          # name of the job submitted
+#SBATCH -p short                                        # name of the queue you are submitting to
+#SBATCH -n 8                                            # number of cores/tasks in this job, you get all 20 cores with 2 threads per core with hyperthreading
+#SBATCH -N 1                                            # nodes
+#SBATCH --mem=32G                                       # memory allocation
+#SBATCH -t 47:00:00                                     # time allocated for this job hours:mins:seconds
+#SBATCH --mail-user=XXXXXXX             # will receive an email when job fails
+#SBATCH --mail-type=FAIL                                # will receive an email when job fails
+#SBATCH -o "stdout.%j.%N"                               # standard out %j adds job number to outputfile name and %N adds the node name
+#SBATCH -e "stderr.%j.%N"                               # optional but it prints our standard error
+
+# ENTER COMMANDS HERE:
+
+source ~/iREP/bin/activate
+
+iRep_filter.py -c 3 -w 93 -t *tsv --long > ALL_RESULTS_long
+
+####################################################
+
+
+# Analysis in R
+
 library(tidyverse)
 library(broom)
 library(lme4)

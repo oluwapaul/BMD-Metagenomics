@@ -37,18 +37,12 @@ my_colors <- c(
 )
 
 
-setwd(dir = "~/Desktop/Tim-Lab/BMD/R_script")
+setwd(dir = "~/R_script")
 
 #########################################
 #Read in the data
 #########################################
 
-#countdata <- read.delim("count-tables-from-Carmen/rgi_count_table.txt", 
-#sep = "\t", 
-#header = T, 
-#row.names = 1, 
-#nrow = length(readLines("count-tables-from-Carmen/rgi_count_table.txt")) - 2)
-#countdata <- read.delim("count-tables-from-Carmen/Pfam_count_table-tim.txt", sep = "\t", header = T)
 countdata <- read.delim("TIGR_count_table.txt", 
                         sep = "\t", 
                         header = T, 
@@ -56,12 +50,12 @@ countdata <- read.delim("TIGR_count_table.txt",
                         nrow = length(readLines("TIGR_count_table.txt")) - 2)
                         #nrow = 10000)
 
-#tail(countdata), why was d07sub045 deleted ?
+# d07sub045 was deleted becasue it was not well annotated
 countdata <- countdata[ , -which(names(countdata) %in% c("d07sub045"))] 
 
 countdata <- as.data.frame(t(as.matrix(countdata)))
 
-#str(countdata)
+str(countdata)
 
 meta <- read.csv("mg_metadata.csv")
 meta <- meta[-which(meta$sample %in% c("d07sub045")), ] 
@@ -75,7 +69,7 @@ str(meta)
 #Now I need to work on the gene lengths and sequence counts per sample...
 
 #I have a file with the total obtained counts at 
-#  /Volumes/ag_ansc/Users/john2185/USDA_laptop/Desktop/BMD_turkeys/stderr.12495.sn-mem-0
+#  ./stderr.12495.sn-mem-0
 
 # This is the report log from trimmomatic and I parsed out of that the total number of sequences. 
 # For example, each sample has something like this:
@@ -172,13 +166,8 @@ cor.test(sample_reads2_meta$Total_seqs, sample_reads2_meta$TIGRtotals, method=c(
   
 ####Normalization and Statistics
 ##This is a long step. If you have already completed this step, run the following 
-##line to avoid the long step of rounding (Line 151)
+##line to avoid the long step of rounding (Line 217)
 
-#rpm_final <- read.delim("output/rpkm_count_table.txt", 
-#                        sep = "\t", 
-                        #header = T,
-#                        nrow = 100)
-                        #row.names = 1) 
 
 # Kata, in her breast milk microbiome paper normalized by 16S copies 
 # rather than total reads, but that's a minor difference and rpkm is 
@@ -223,12 +212,20 @@ min(rpm_final[rpm_final>0])
 
 
 ##rpm_final <- as.data.frame(t(as.matrix(rpm_final)))
-write.table(rpm_final, "output/categ_rpm_count_table.txt", sep = "\t", quote = F, row.names = T)
+write.table(rpm_final, "output/rpm_count_table.txt", sep = "\t", quote = F, row.names = T)
 
+# load the normalized data if you already normalized
+#rpm_final <- read.delim("output/rpkm_count_table.txt", 
+#                        sep = "\t", 
+                        #header = T,
+#                        nrow = 100)
+                        #row.names = 1) 
 
 #########################################
 #beta diversity
 #########################################
+
+# First collapse the ORF based on their functional category
 
 #phyloseq-ize the rpkm table
 rpm_deseq <- rpm_final
@@ -509,26 +506,7 @@ PW.Adonis %>%
   ggtitle('Dissimilarity of cecal microbiota over time', subtitle = 'PERMANOVA F statistic at each timepoint, how different are the diets at each timepoint? ') 
 ggsave("output/categ_Fstat.png", height = 3, width = 6)
 
-#########################################
-#ARG Dissimilarity change over time
 
-Adonis_ARG <- read.csv ("Adonis_ARGs-Results.csv", header=TRUE, sep=",")
-Adonis_ARG$day  <- as.factor(Adonis_ARG$day)
-
-Adonis_ARG %>%  
-  ggplot(aes(x=day, y=R2, shape=pairs, color = significant)) +
-  geom_line(color = "black") +
-  geom_vline(xintercept=35, color = 'black', linetype = "dotted") + 
-  geom_point(size = 3) +
-  theme_classic() +
-#ylim(c(0,4)) +
-#facet_grid(.~location) +
-#geom_text(aes(label = BF.corr), hjust=0, vjust=0, size=3) +
-ggtitle('PERMANOVA of cecal ARGs overtime', subtitle = 'R sq. how different are the diets at each timepoint? ') 
-ggsave("output/ARG_R2.png", height = 3, width = 6)
-
-#########################################
-##
 ##   Alpha Diversity
 ##
 #########################################

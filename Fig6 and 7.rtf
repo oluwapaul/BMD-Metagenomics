@@ -9,12 +9,6 @@ The goal is to call ARGs in the BMD metagenome in both the binned and unbinned a
 
 RGI 4.0.3 is installed on SciNet. Use `module load rgi`.
 
-First I want to put the data in my own space to work on here:
-
-`/project/fsep_004/tim_johnson/bmd/data/jules_assembly/`
-
-I put the metaspades assembly in the `unbinned` directory and the metabat binned in the `binned` directory.
-
 ###Run metagenemark
 
 In order for metagenemark to run I have to put the license in my home directory with the name `.gm_key`
@@ -25,8 +19,8 @@ My home directory is /home/tim.johnson
 
 $ module load metagenemark/3.26
 
-$ cd /project/fsep_004/tim_johnson/bmd/data/jules_assembly/unbinned
-$ /software/7/apps/metagenemark/3.26/gmhmmp metaspades_500_scaff.fa -m /software/7/apps/metagenemark/3.26/MetaGeneMark_v1.mod -f G -a -d -A metaspades_500_scaff.prot.fasta -D metaspades_500_scaff.nucl.fasta
+$ cd ./unbinned
+$ ./gmhmmp metaspades_500_scaff.fa -m ./MetaGeneMark_v1.mod -f G -a -d -A metaspades_500_scaff.prot.fasta -D metaspades_500_scaff.nucl.fasta
 
 ## Fix spaces in fasta files
 $ for i in d*.prot.fasta; do cat $i | tr '\t' '|' | tr ' ' '_' > $i.ns; done
@@ -59,7 +53,7 @@ python rgi.py -t protein -i $i -n 16 -o $i.rgi_out -v 1
 
 ##Now loop over all the bins
 
-$ cd /project/fsep_004/tim_johnson/bmd/data/jules_assembly/binned/mgm_out
+$ cd ./mgm_out
 
 $ for i in *.fasta.ns; do rgi main --input_type protein --input_sequence $i -n 40 -o ../rgi_out/$i.rgi_out --local -a DIAMOND -n 40 --clean; done
 
@@ -247,7 +241,7 @@ min(rpkm2[rpkm2>0])
 #rpkm_meta <- rpkm_meta[,-1]
 rpkm_round <- round(rpkm2)
 rpkm_round <- rpkm_round + 1
-write.table(rpkm_round, "../AMR/jules_assembly/data/rpkm/rpkm_count_table_pseudocounts_20220415.txt", sep = "\t", quote = F, row.names = T)
+write.table(rpkm_round, "../rpkm_count_table_pseudocounts_20220415.txt", sep = "\t", quote = F, row.names = T)
 ```
 
 First lets do some diversity statistics:
@@ -460,6 +454,32 @@ PW.Adonis %>%
 ggsave("output/Fstat_metabolome.png", height = 3, width = 6)
 ```
 
+
+#########################################
+#ARG Dissimilarity change over time
+
+Adonis_ARG <- read.csv ("Adonis_ARGs-Results.csv", header=TRUE, sep=",")
+Adonis_ARG$day  <- as.factor(Adonis_ARG$day)
+
+Adonis_ARG %>%  
+  ggplot(aes(x=day, y=R2, shape=pairs, color = significant)) +
+  geom_line(color = "black") +
+  geom_vline(xintercept=35, color = 'black', linetype = "dotted") + 
+  geom_point(size = 3) +
+  theme_classic() +
+#ylim(c(0,4)) +
+#facet_grid(.~location) +
+#geom_text(aes(label = BF.corr), hjust=0, vjust=0, size=3) +
+ggtitle('PERMANOVA of cecal ARGs overtime', subtitle = 'R sq. how different are the diets at each timepoint? ') 
+ggsave("output/ARG_R2.png", height = 3, width = 6)
+
+#########################################
+
+
+
+##########################################
+# For DESeq2
+##########################################
 For statistics, I looked online for metagenomics statistical packages. There is an R package called `metagenomicsSeq`, but I found no good explanation of how to use it. This package was "designed to address both the effects of both normaliation and under sampling of microbial communities on disease association detection and the testing of feature correlations." https://bioconductor.org/packages/release/bioc/html/metagenomeSeq.html.
 
 While this sounds good, I don't know how to run it. DEseq2 is a pretty good piece of saftware with excellent documentation. Kata used it in her Nature Communications paper on AMR genes in the infant fecal microbiome. So I will give that a try. The software is meant for un-normalized read counts. I have normalized read counts, so I'm a little nervous about that, but  I will give it a try.

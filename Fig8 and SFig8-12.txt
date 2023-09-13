@@ -2,8 +2,12 @@
 
 setwd(dir = "~/Network_analysis")
 
-#ARG <- read.csv2("normalized_ARG_rpkm_count_table_pseudocounts.csv", sep = ",", header = T,check.names=FALSE)
-#row.names(ARG) <- ARG[,1]
+ARG <- read.delim("rgi_count_table.txt", 
+                        sep = "\t", 
+                        header = T, 
+                        row.names = 1)
+
+
 #Only T4SS and ICE (Conjugative transposon)
 MGE_conj <- read.delim("function_rpm_conjugation.txt", sep = "\t", header = T,check.names=FALSE)
 MGE_phage <- read.delim("function_rpm_phage.csv", sep = ",", header = T,check.names=FALSE)

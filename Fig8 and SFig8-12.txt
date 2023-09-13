@@ -2,33 +2,17 @@
 
 setwd(dir = "~/Network_analysis")
 
-ARG <- read.delim("rgi_count_table.txt", 
-                        sep = "\t", 
-                        header = T, 
-                        row.names = 1)
-
+ARG <- read.csv2("normalized_ARG_rpkm_count_table_pseudocounts.csv", sep = ",", header = T,check.names=FALSE)
 
 #Only T4SS and ICE (Conjugative transposon)
 MGE_conj <- read.delim("function_rpm_conjugation.txt", sep = "\t", header = T,check.names=FALSE)
 MGE_phage <- read.delim("function_rpm_phage.csv", sep = ",", header = T,check.names=FALSE)
 #row.names(ARG) <- ARG[,1]
 
-
-rgi_gff <- read.delim("metaspades_500_scaff.prot.fasta.ns.rgi_out.txt", sep = "\t", header = T)
-#colnames(rgi_gff) <- c("seqid", "source", "type", "start", "stop", "score", "strand", "phase", "attributes")
-#rgi_gff$length <- rgi_gff$stop - rgi_gff$start + 1
-#rgi_gff2 <- rgi_gff %>%
-#  separate(attributes, into = c("title", "gene_id", "title2","Gene_name", "title3", "Spectrum", "title4","Category", "title5","Mechanism"), sep = "[;=]") 
-rgi_gff <- separate(data = rgi_gff, col = ORF_ID, into = c("gene", "GeneMark", "length", "To", "start", "end", "Node"), remove = F)
-rgi_gff$gene_name <- paste(rgi_gff$gene,rgi_gff$GeneMark, sep="_")
-rgi_gff2<-dplyr::select(rgi_gff,gene_name,Best_Hit_ARO,Drug.Class,Resistance.Mechanism,AMR.Gene.Family,)
-names(rgi_gff2) <- c("gene_name", "AMR_name", "Drug_Class", "Resistance_Mechanism", "AMR_family")
-rgi_gff2$gene_name2 <- rgi_gff2$gene_name
-
 ARG <- as.data.frame(t(as.matrix(ARG)))
 
-#names(ARG) <- ARG[1,] 
-#ARG <- ARG[-1,]
+names(ARG) <- ARG[1,] 
+ARG <- ARG[-1,]
 
 str(ARG)
 str(MGE_conj)

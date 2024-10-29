@@ -14,6 +14,6 @@ The scrips are arranged in the following other:
 7. Fig2_Fig1-3.R - input file produced by script from Fig1.R
 8. Fig3-4.R - input file from Quality filtering and assembly.txt
 9. Fig5_FigS4-5.R - input file provided in data folder
-10. Fig6_FigS6-10.txt - input files from Fig3-4.R and is also provided in data folder
+10. Fig6_FigS6-10.R - input files from Fig3-4.R and is also provided in data folder
 11. Fig7_Fig11.R - input file provided in data folder
 12. Fig8_Fig12.R - input file from Quality filtering and assembly.txt
